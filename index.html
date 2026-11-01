@@ -1609,7 +1609,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   /* ---------- Séance ---------- */
   // Chaque mot passe par des étapes : voir, cacher, écrire, comparer.
   // Un mot long (3 syllabes ou plus) encore nouveau s'apprend d'abord par morceaux, puis en entier.
-  var S = null, hideTimer = null;
+  var G = null, hideTimer = null;
   function buildSteps(e) {
     var w = e.w, p = P(e.k), segs = segments(w);
     var syls = segs.filter(function (s) { return s.k === 's'; });
@@ -1629,7 +1629,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   }
   function startSession(entries, kind) {
     if (!entries.length) return;
-    S = {
+    G = {
       kind: kind, total: entries.length, done: 0,
       queue: entries.map(function (e) { return { e: e, steps: buildSteps(e) }; }),
       results: {}, order: [], gained: [], requeued: {}
@@ -1639,27 +1639,27 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   }
   function nextItem() {
     clearTimeout(hideTimer);
-    if (!S.queue.length) { finish(); return; }
-    S.item = S.queue.shift();
-    S.step = 0;
-    S.views = 0;
+    if (!G.queue.length) { finish(); return; }
+    G.item = G.queue.shift();
+    G.step = 0;
+    G.views = 0;
     startStep();
   }
-  function cur() { return S.item.steps[S.step]; }
+  function cur() { return G.item.steps[G.step]; }
   function startStep() {
-    S.attempt = 0;
-    S.copy = false;
-    S.typed = cur().target.slice(0, cur().locked);
+    G.attempt = 0;
+    G.copy = false;
+    G.typed = cur().target.slice(0, cur().locked);
     phaseSee();
   }
   function updateMeter() {
-    var pct = Math.round(100 * S.done / S.total);
+    var pct = Math.round(100 * G.done / G.total);
     $('#bar').style.width = pct + '%';
     $('#meter').setAttribute('aria-valuenow', pct);
-    $('#count').textContent = Math.min(S.done + 1, S.total) + ' / ' + S.total;
+    $('#count').textContent = Math.min(G.done + 1, G.total) + ' / ' + G.total;
   }
   function sayBtn() { return '<button class="rond say-btn" type="button" id="sayBtn" aria-label="Écouter le mot">' + ICON.say + '</button>'; }
-  function bindSay() { var b = $('#sayBtn'); if (b) b.addEventListener('click', function () { speak(S.item.e.w.w, true); }); }
+  function bindSay() { var b = $('#sayBtn'); if (b) b.addEventListener('click', function () { speak(G.item.e.w.w, true); }); }
   function setCard(cls, html) {
     var card = $('#card');
     card.className = 'card' + (cls ? ' ' + cls : '');
@@ -1667,25 +1667,25 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     bindSay();
   }
   function bigWord(opts) {
-    var w = S.item.e.w;
+    var w = G.item.e.w;
     return '<p class="word" style="font-size:' + fitSize(w.w) + '">' + wordHTML(w, opts) + '</p>';
   }
-  function tipHTML() { var tip = S.item.e.w.tip; return tip ? '<p class="astuce">' + esc(tip) + '</p>' : ''; }
+  function tipHTML() { var tip = G.item.e.w.tip; return tip ? '<p class="astuce">' + esc(tip) + '</p>' : ''; }
 
   // 1. Voir
   function phaseSee() {
-    S.phase = 'see';
+    G.phase = 'see';
     updateMeter();
     hideCreature();
     var st = cur(), label = st.piece ? 'Morceau ' + st.piece + ' sur ' + st.pieces : st.whole ? 'Maintenant le mot entier' : 'Regarde bien le mot';
     setCard('', sayBtn() + '<p class="etiquette">' + label + '</p>' + bigWord(st.piece ? { later: st.target.length } : null) + tipHTML());
     $('#bottom').innerHTML = '<button class="btn btn-action" type="button" id="seenBtn">Je l\'ai dans la tête</button>';
     $('#seenBtn').addEventListener('click', phaseHide);
-    if (S.step === 0 && S.attempt === 0 && !S.views) speak(S.item.e.w.w);
+    if (G.step === 0 && G.attempt === 0 && !G.views) speak(G.item.e.w.w);
   }
   // 2. Cacher : le mot disparaît quelques secondes.
   function phaseHide() {
-    S.phase = 'hide';
+    G.phase = 'hide';
     setCard('', '<div class="cloud" aria-hidden="true"><i></i></div><p class="prompt">Le mot se cache…<br>Vois-le dans ta tête.</p><div class="dots" id="dots"><i></i><i></i><i></i></div>');
     $('#bottom').innerHTML = '<button class="btn" type="button" disabled>…</button>';
     var n = 0;
@@ -1712,84 +1712,84 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   }
   function phaseWrite() {
     clearTimeout(hideTimer);
-    S.phase = 'write';
+    G.phase = 'write';
     var st = cur();
-    if (S.copy) setCard('a-retenter', sayBtn() + '<p class="etiquette">Recopie-le en le regardant</p>' + bigWord(st.piece ? { later: st.target.length } : null));
+    if (G.copy) setCard('a-retenter', sayBtn() + '<p class="etiquette">Recopie-le en le regardant</p>' + bigWord(st.piece ? { later: st.target.length } : null));
     else setCard('', sayBtn() + '<p class="prompt">' + (st.locked ? 'Écris la suite du mot' : 'Écris le mot de mémoire') + '</p>');
     $('#bottom').innerHTML = '<div class="typed" id="typed" aria-live="polite" aria-label="Ce que tu as écrit"></div>' + keyboardHTML() +
-      '<div class="actions">' + (S.copy ? '' : '<button class="btn btn-doux" type="button" id="peekBtn">' + ICON.eye + 'Revoir</button>') +
+      '<div class="actions">' + (G.copy ? '' : '<button class="btn btn-doux" type="button" id="peekBtn">' + ICON.eye + 'Revoir</button>') +
       '<button class="btn btn-action" type="button" id="checkBtn">' + ICON.check + 'Vérifier</button></div>';
     renderTyped();
     $('#kb').addEventListener('mousedown', function (e) { e.preventDefault(); });
     $('#kb').addEventListener('click', function (e) { var k = e.target.closest('[data-k]'); if (k) typeKey(k.getAttribute('data-k')); });
     $('#checkBtn').addEventListener('click', check);
-    if (!S.copy) $('#peekBtn').addEventListener('click', function () { S.views++; phaseSee(); });
+    if (!G.copy) $('#peekBtn').addEventListener('click', function () { G.views++; phaseSee(); });
   }
   function renderTyped() {
     var el = $('#typed'), st = cur();
     if (!el) return;
-    var lock = S.typed.slice(0, st.locked), rest = S.typed.slice(st.locked);
+    var lock = G.typed.slice(0, st.locked), rest = G.typed.slice(st.locked);
     el.innerHTML = '<span class="lock">' + esc(lock) + '</span><span>' + esc(rest).replace(/ /g, '&nbsp;') + '</span><span class="caret"></span>';
-    el.style.fontSize = S.typed.length > 9 ? fitSize(S.typed + '  ', 2) : '';
+    el.style.fontSize = G.typed.length > 9 ? fitSize(G.typed + '  ', 2) : '';
   }
   function typeKey(k) {
-    if (S.phase !== 'write') return;
+    if (G.phase !== 'write') return;
     var st = cur();
-    if (k === 'del') { if (S.typed.length > st.locked) S.typed = S.typed.slice(0, -1); }
-    else if (S.typed.length < st.target.length + 8) S.typed += k;
+    if (k === 'del') { if (G.typed.length > st.locked) G.typed = G.typed.slice(0, -1); }
+    else if (G.typed.length < st.target.length + 8) G.typed += k;
     sound('key');
     renderTyped();
   }
   // 4. Comparer
   function check() {
-    if (S.phase !== 'write') return;
-    var st = cur(), e = S.item.e;
-    if (S.typed.length <= st.locked) return;
-    var ok = norm(S.typed).toLowerCase() === norm(st.target).toLowerCase();
-    var last = S.step === S.item.steps.length - 1;
+    if (G.phase !== 'write') return;
+    var st = cur(), e = G.item.e;
+    if (G.typed.length <= st.locked) return;
+    var ok = norm(G.typed).toLowerCase() === norm(st.target).toLowerCase();
+    var last = G.step === G.item.steps.length - 1;
     // Le premier essai du mot entier compte pour la répétition espacée.
-    if (last && S.attempt === 0 && !S.item.again && !(e.k in S.results)) {
-      S.results[e.k] = ok;
-      S.order.push(e);
-      if (record(e.k, ok, S.views)) S.gained.push(e);
+    if (last && G.attempt === 0 && !G.item.again && !(e.k in G.results)) {
+      G.results[e.k] = ok;
+      G.order.push(e);
+      if (record(e.k, ok, G.views)) G.gained.push(e);
     }
     if (ok) success(last);
     else mistake(last);
   }
   function success(last) {
-    S.phase = 'ok';
+    G.phase = 'ok';
     var st = cur();
-    setCard('reussie', '<p class="etiquette">' + (S.copy ? 'Bien recopié' : 'Tout juste') + '</p><p class="word" style="font-size:' + fitSize(st.target) + '">' + wordHTML(S.item.e.w, st.piece ? { later: st.target.length } : null) + '</p>');
-    $('#bottom').innerHTML = '<p class="feedback ok">' + (S.copy ? 'Bravo, tu l\'as écrit !' : pick(['Bravo !', 'Parfait !', 'Tout juste !', 'Super !'])) + '</p>' +
-      '<button class="btn btn-action" type="button" id="nextBtn">' + (last ? (S.queue.length ? 'Mot suivant' : 'Voir mon bilan') : 'Continuer') + '</button>';
+    setCard('reussie', '<p class="etiquette">' + (G.copy ? 'Bien recopié' : 'Tout juste') + '</p><p class="word" style="font-size:' + fitSize(st.target) + '">' + wordHTML(G.item.e.w, st.piece ? { later: st.target.length } : null) + '</p>');
+    $('#bottom').innerHTML = '<p class="feedback ok">' + (G.copy ? 'Bravo, tu l\'as écrit !' : pick(['Bravo !', 'Parfait !', 'Tout juste !', 'Super !'])) + '</p>' +
+      '<button class="btn btn-action" type="button" id="nextBtn">' + (last ? (G.queue.length ? 'Mot suivant' : 'Voir mon bilan') : 'Continuer') + '</button>';
     $('#nextBtn').addEventListener('click', function () {
-      if (!last) { S.step++; startStep(); return; }
-      S.done = Math.min(S.total, S.done + (S.item.again ? 0 : 1));
+      if (!last) { G.step++; startStep(); return; }
+      G.done = Math.min(G.total, G.done + (G.item.again ? 0 : 1));
       nextItem();
     });
     sound('ok');
     stars();
     if (prefs.anim) replay($('#card'), 'anim-bravo');
-    if (last) showCreature(S.attempt > 0 ? pick(['Bien rattrapé !', 'Tu y es arrivé !']) : (S.gained.length && S.gained[S.gained.length - 1] === S.item.e ? 'Dans le trésor !' : ''));
+    if (last) showCreature(G.attempt > 0 ? pick(['Bien rattrapé !', 'Tu y es arrivé !']) : (G.gained.length && G.gained[G.gained.length - 1] === G.item.e ? 'Dans le trésor !' : ''));
   }
   // Erreur : la carte secoue la tête, le téléphone vibre, puis l'aide apparaît. Pas de croix rouge.
   function mistake(last) {
-    S.phase = 'fix';
-    var st = cur(), ops = align(S.typed, st.target);
+    G.phase = 'fix';
+    var st = cur(), ops = align(G.typed, st.target);
     // Le mot raté revient un peu plus tard dans la séance (une seule fois).
-    if (last && S.attempt === 0 && !S.item.again && !S.requeued[S.item.e.k]) {
-      S.requeued[S.item.e.k] = true;
-      S.queue.splice(Math.min(2, S.queue.length), 0, { e: S.item.e, steps: [{ target: S.item.e.w.w, locked: 0 }], again: true });
+    if (last && G.attempt === 0 && !G.item.again && !G.requeued[G.item.e.k]) {
+      G.requeued[G.item.e.k] = true;
+      G.queue.splice(Math.min(2, G.queue.length), 0, { e: G.item.e, steps: [{ target: G.item.e.w.w, locked: 0 }], again: true });
     }
-    S.attempt++;
-    S.copy = S.attempt >= 2;
-    setCard('a-retenter', sayBtn() + '<div class="attempt"><small>Ton essai</small><p class="diff" style="font-size:' + fitSize(S.typed + '  ', 2.6) + '">' + diffHTML(ops) + '</p></div>' +
-      '<div class="attempt"><small>Le mot</small><p class="word" style="font-size:' + fitSize(st.target, 3.2) + '">' + wordHTML(S.item.e.w, { later: st.piece ? st.target.length : null, hl: wrongIdx(ops) }) + '</p></div>' + tipHTML());
-    $('#bottom').innerHTML = '<p class="feedback fix">' + (S.copy ? 'Presque ! Cette fois, tu le recopies en le regardant.' : 'Presque ! Regarde bien les lettres qui clignotent.') + '</p>' +
-      '<button class="btn btn-action" type="button" id="retryBtn">' + (S.copy ? 'Je le recopie' : 'Je réessaie') + '</button>';
+    G.attempt++;
+    G.copy = G.attempt >= 2;
+    setCard('a-retenter', sayBtn() + '<div class="attempt"><small>Ton essai</small><p class="diff" style="font-size:' + fitSize(G.typed + '  ', 2.6) + '">' + diffHTML(ops) + '</p></div>' +
+      '<div class="attempt"><small>Le mot</small><p class="word" style="font-size:' + fitSize(st.target, 3.2) + '">' + wordHTML(G.item.e.w, { later: st.piece ? st.target.length : null, hl: wrongIdx(ops) }) + '</p></div>' + tipHTML());
+    $('#bottom').innerHTML = '<p class="feedback fix">' + (G.copy ? 'Presque ! Cette fois, tu le recopies en le regardant.' : 'Presque ! Regarde bien les lettres qui clignotent.') + '</p>' +
+      '<button class="btn btn-action" type="button" id="retryBtn">' + (G.copy ? 'Je le recopie' : 'Je réessaie') + '</button>';
     $('#retryBtn').addEventListener('click', function () {
-      S.typed = st.target.slice(0, st.locked);
-      if (S.copy) phaseWrite(); else phaseHide();
+      G.typed = st.target.slice(0, st.locked);
+      if (G.copy) phaseWrite(); else phaseHide();
     });
     hideCreature();
     sound('ko');
@@ -1801,7 +1801,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   // Clavier physique (ordinateur, tablette avec clavier).
   document.addEventListener('keydown', function (e) {
     if ($('#play').hidden || e.ctrlKey || e.metaKey || e.altKey) return;
-    if (S.phase === 'write') {
+    if (G.phase === 'write') {
       if (e.key === 'Backspace') { e.preventDefault(); typeKey('del'); }
       else if (e.key === 'Enter') { e.preventDefault(); check(); }
       else if (e.key.length === 1 && (LETTER.test(e.key) || e.key === "'" || e.key === '’' || e.key === '-' || e.key === ' ')) { e.preventDefault(); typeKey(e.key === '’' ? "'" : e.key.toLowerCase()); }
@@ -1812,29 +1812,29 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   });
 
   function finish() {
-    var t = today(), order = S.order, firstOk = order.filter(function (e) { return S.results[e.k]; });
+    var t = today(), order = G.order, firstOk = order.filter(function (e) { return G.results[e.k]; });
     log[t] = log[t] || { sessions: 0, words: 0, first: 0 };
     log[t].sessions += 1;
     log[t].words += order.length;
     log[t].first += firstOk.length;
-    if (S.kind === 'daily' || S.kind === 'more') log[t].daily = true;
+    if (G.kind === 'daily' || G.kind === 'more') log[t].daily = true;
     saveLog();
     hideCreature();
     var c = nextCreature();
     $('#doneArt').innerHTML = creatureSVG(c);
     var total = Object.keys(log).reduce(function (n, d) { return n + (log[d].sessions || 0); }, 0);
-    $('#doneTitle').textContent = S.kind === 'list' ? 'Bien travaillé !' : 'À demain !';
+    $('#doneTitle').textContent = G.kind === 'list' ? 'Bien travaillé !' : 'À demain !';
     $('#doneBadge').textContent = '★ Séance faite';
     $('#doneSub').textContent = c[0] + ' te dit bravo. Séances faites en tout : ' + total + '.';
-    $('#doneNewPanel').hidden = !S.gained.length;
-    $('#doneNew').innerHTML = S.gained.map(function (e) { return '<li class="gold">' + esc(e.w.w) + '</li>'; }).join('');
+    $('#doneNewPanel').hidden = !G.gained.length;
+    $('#doneNew').innerHTML = G.gained.map(function (e) { return '<li class="gold">' + esc(e.w.w) + '</li>'; }).join('');
     $('#doneWords').innerHTML = order.map(function (e) {
-      return S.results[e.k] ? '<li class="good">' + esc(e.w.w) + '</li>' : '<li>' + esc(e.w.w) + '<small>revient demain</small></li>';
+      return G.results[e.k] ? '<li class="good">' + esc(e.w.w) + '</li>' : '<li>' + esc(e.w.w) + '<small>revient demain</small></li>';
     }).join('');
     $('#doneHint').textContent = firstOk.length === order.length ? 'Tous du premier coup !' : 'En vert : écrits du premier coup. Les autres reviennent demain pour bien les fixer.';
     show('done');
     sound('win');
-    if (S.gained.length || firstOk.length === order.length) confetti();
+    if (G.gained.length || firstOk.length === order.length) confetti();
   }
   $('#doneBack').addEventListener('click', renderHome);
 
