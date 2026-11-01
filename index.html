@@ -332,6 +332,41 @@ h2 { font-size: 1.4rem; }
 .empty-state { text-align: center; display: flex; flex-direction: column; gap: 12px; align-items: center; }
 .empty-state p { margin: 0; font-weight: 700; }
 
+/* Dictées */
+:root { --g-rouge: #FF8A8A; --g-jaune: #FFD45C; --g-vert: #5ED39E; --g-violet: #B48CFF; }
+.dicts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.dicts li { display: flex; align-items: center; gap: 8px; padding: 4px 6px 4px 4px; border: var(--bord) solid var(--line); border-radius: 20px; background: var(--surface2); }
+.dicts li.faite { background: var(--tint-good); }
+.coche { flex: none; width: 52px; height: 52px; display: grid; place-items: center; cursor: pointer; }
+.coche input { appearance: none; margin: 0; width: 34px; height: 34px; border: var(--bord) solid var(--line); border-radius: 10px; background: var(--surface); cursor: pointer; display: grid; place-items: center; }
+.coche input::after { content: '✓'; font: 900 1.4rem var(--display); color: var(--on-good); opacity: 0; }
+.coche input:checked { background: var(--good); }
+.coche input:checked::after { opacity: 1; }
+.dict-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; min-height: 56px; padding: 4px 4px; background: none; border: 0; text-align: left; cursor: pointer; color: inherit; }
+.dict-open .info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dict-open .name { font-family: var(--display); font-weight: 600; font-size: 1.08rem; line-height: 1.15; overflow-wrap: break-word; }
+.dict-open .etiquette { font-size: .7rem; }
+.dict-open .sub { color: var(--muted); font-weight: 700; font-size: .84rem; line-height: 1.3; }
+.dict-open .sub .gdot { width: 12px; height: 12px; margin-right: 5px; vertical-align: -1px; }
+.dict-open .chev { flex: none; font: 700 1.6rem var(--display); color: var(--muted); }
+.num { flex: none; width: 34px; height: 34px; display: grid; place-items: center; border: 2.5px solid var(--line); border-radius: 50%; background: var(--surface); font: 700 1rem var(--display); }
+.gdot { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--line); flex: none; }
+.gdot.rouge { background: var(--g-rouge); } .gdot.jaune { background: var(--g-jaune); } .gdot.vert { background: var(--g-vert); } .gdot.violet { background: var(--g-violet); }
+.gdot.rj { background: linear-gradient(90deg, var(--g-rouge) 50%, var(--g-jaune) 50%); }
+.dtitre { display: flex; align-items: center; gap: 10px; }
+.dtitre .num { width: 42px; height: 42px; font-size: 1.2rem; }
+.gseg { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.gseg button { min-height: 56px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding: 6px 2px; font: 600 1rem var(--display); color: var(--ink); background: var(--surface2); border: var(--bord) solid var(--line); border-radius: var(--r-touche); cursor: pointer; }
+.gseg button .gdot { width: 20px; height: 20px; }
+.gseg button[aria-checked="true"] { background: var(--p-soleil); box-shadow: 0 4px 0 var(--line); transform: translateY(-2px); }
+.gseg button[aria-checked="true"]::after { content: '✓'; font: 900 .9rem var(--display); line-height: 1; margin-top: -2px; }
+@media (max-width: 360px) { .gseg button { font-size: .9rem; } }
+.dmots { display: flex; flex-direction: column; gap: 12px; }
+.dmots h3 { font-size: 1.05rem; margin-bottom: 6px; }
+.chips li .gdot { width: 11px; height: 11px; border-width: 1.5px; margin-right: 6px; vertical-align: 1px; }
+.dmots .legende { display: flex; flex-wrap: wrap; gap: 4px 14px; color: var(--muted); font-weight: 700; font-size: .84rem; }
+.dmots .legende span { display: inline-flex; align-items: center; gap: 6px; }
+
 /* Mots écrits en grand : syllabes en couleur, lettres muettes grisées, lettres pièges surlignées */
 .word { font-family: var(--lecture); font-weight: 900; letter-spacing: .03em; line-height: 1.15; margin: 0; white-space: nowrap; }
 .word span { display: inline-block; position: relative; }
@@ -519,6 +554,11 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     <section id="home" class="stack">
       <div class="intro"><span class="mini" aria-hidden="true"><span class="syl-a">pa</span><span class="syl-b">pil</span><span class="syl-a">lon</span></span><p>Je regarde le mot, je le cache, je l'écris de mémoire.</p></div>
       <div class="panel today" id="todayPanel"></div>
+      <div class="panel" id="dictPanel">
+        <h2>Les dictées</h2>
+        <p class="hint">Touche une dictée pour choisir ton groupe et voir les mots. Coche-la quand elle est faite.</p>
+        <ul class="dicts" id="homeDicts"></ul>
+      </div>
       <div class="panel" id="listsPanel">
         <h2>Mes listes</h2>
         <ul class="lists" id="homeLists"></ul>
@@ -581,6 +621,27 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
         <ul class="road" id="trRoad"></ul>
       </div>
       <button class="btn" type="button" id="trBack">Retour</button>
+    </section>
+
+    <!-- Une dictée -->
+    <section id="dictee" class="stack" hidden>
+      <div class="panel">
+        <div class="dtitre"><span class="num" id="dNum"></span><h2 id="dTitle"></h2></div>
+        <label class="interrupteur"><span>✅ Dictée faite</span><input type="checkbox" id="dFaite"></label>
+      </div>
+      <div class="panel">
+        <h2>Mon groupe</h2>
+        <div class="gseg" role="radiogroup" aria-label="Mon groupe pour cette dictée" id="dGroupes"></div>
+        <p class="hint" id="dAide"></p>
+        <label class="field" id="dDateField" hidden>Date de la dictée (facultatif)<input type="date" id="dDate"></label>
+      </div>
+      <div class="panel" id="dMotsPanel">
+        <h2 id="dCount">Les mots</h2>
+        <div id="dMots" class="dmots"></div>
+        <button class="link" type="button" id="dPlus" hidden>Ajouter des mots en plus</button>
+      </div>
+      <button class="btn btn-action" type="button" id="dGo" disabled>S'entraîner sur cette dictée</button>
+      <button class="btn" type="button" id="dBack">Retour</button>
     </section>
 
     <!-- Espace parent -->
@@ -684,15 +745,20 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
   };
   // Tout reste sur l'appareil, sous des clés « marc.mots.* ».
-  var KEYS = { lists: 'marc.mots.listes', prog: 'marc.mots.progres', log: 'marc.mots.journal', prefs: 'marc.mots.reglages' };
+  var KEYS = { lists: 'marc.mots.listes', prog: 'marc.mots.progres', log: 'marc.mots.journal', prefs: 'marc.mots.reglages', dict: 'marc.mots.dictees' };
   var lists = store.get(KEYS.lists, []);
   var prog = store.get(KEYS.prog, {});
   var log = store.get(KEYS.log, {});
   var prefs = Object.assign({ sound: true, anim: true, voice: true, syl: true, size: 6 }, store.get(KEYS.prefs, {}));
   if (!Array.isArray(lists)) lists = [];
+  // Dictées cochées « faite » : { faites: { numéro: date } }.
+  var dict = store.get(KEYS.dict, {});
+  if (!dict || typeof dict !== 'object') dict = {};
+  if (!dict.faites || typeof dict.faites !== 'object') dict.faites = {};
   function saveLists() { store.set(KEYS.lists, lists); }
   function saveProg() { store.set(KEYS.prog, prog); }
   function saveLog() { store.set(KEYS.log, log); }
+  function saveDict() { store.set(KEYS.dict, dict); }
   function savePrefs() { store.set(KEYS.prefs, prefs); applyPrefs(); }
   // <html class="calme"> coupe toutes les animations (charte commune).
   function applyPrefs() {
@@ -841,6 +907,55 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     tips: { est: 'est : le verbe être (il est)', et: 'et : on peut dire « et puis »', 'où': 'où : le lieu (où vas-tu ?)', ou: 'ou : on peut dire « ou bien »', 'là': 'là : le lieu (il est là)' }
   };
 
+  /* ---------- Dictées de l'école (fiche « Listes des mots à apprendre ») ---------- */
+  // Par dictée : mots du 1er groupe (rj = rouge et jaune), du 2e (vert), du 3e (violet).
+  // Catégories : N noms, A adjectifs et participes passés, V verbes, I mots invariables.
+  // Un mot : 'mot' ou ['mot à écrire', 'astuce montrée avec le mot'].
+  var DICTEES = [{"n":1,"t":"La Tour Eiffel","g":{"rj":{"N":[["construction","la construction"],["tour","la tour"],["an","un an"],["fer","le fer"],["tonne","la tonne"],["peinture","la peinture"],["dizaine","la dizaine"],["centaine","la centaine"]],"V":["se terminer","nécessiter"],"I":["plusieurs","ainsi","plus"]},"vert":{"N":[["sommet","le sommet"],["mètre","le mètre"],["nuit","la nuit"],["heure","l'heure"],["millier","le millier"],["ampoule","l'ampoule"],["ciel","le ciel"]],"V":["briller","rayonner"],"I":["au-dessus","chaque","dans"]},"violet":{"N":[["million","le million"],["début","le début"],["monument","le monument"],["pays","le pays"]],"A":["célèbre"],"I":["même","avec"]}}},{"n":2,"t":"L'amphithéâtre de Nîmes","g":{"rj":{"N":[["siècle","le siècle"],["époque","une époque"],["Gaule","la Gaule"],["étage","l'étage"],["hauteur","la hauteur"],["mètre","le mètre"],["spectateur","le spectateur"]],"A":[["premier","le Ier (premier)"],"construit",["romain","romain / romaine"]],"V":["compter","accueillir"],"I":["jusqu'à"]},"vert":{"N":[["Gallo-Romain","le Gallo-Romain"],["combat","un combat"],["gladiateur","le gladiateur"],["animal","un animal / des animaux"],["bataille","une bataille"],["arène","une arène"],["eau","l'eau"]],"A":["plein","violent"],"V":["assister"],"I":["peut-être","même","grâce"]},"violet":{"N":[["gradin","le gradin"],["galerie","une galerie"],["intérieur","l'intérieur"],["spectateur","le spectateur"],["riche","un riche"],["pauvre","un pauvre"]],"V":["accéder","s'installer"],"I":["en haut","en bas"]}}},{"n":3,"t":"La cathédrale de Reims","g":{"rj":{"N":[["cathédrale","la cathédrale"],["lieu","le lieu"],["France","la France"],["démonstration","une démonstration"],["art","l'art"],["édifice","l'édifice"],["ciel","le ciel"],["lumière","la lumière"]],"A":["gothique",["connu","connu / connue"]],"V":["être","élever","faire","entrer"],"I":["aussi","comme","vers","toujours","plus"]},"vert":{"N":[["Révolution","la Révolution"],["vitrail","un vitrail / des vitraux"]],"A":[["français","français / française"],["bombardé","bombardé / bombardée"],["restauré","restauré / restaurée"],["ancien","ancien(s)"],["moderne","moderne(s)"]],"I":["pendant","lors","mais","ensuite"]},"violet":{"N":[["soir","le soir"],["Moyen-Âge","le Moyen-Âge"],"chacun"],"A":[["illuminé","illuminé / illuminée"],["peint","peint / peinte"]],"V":["voir"],"I":["aujourd'hui","chaque","afin","entièrement"]}}},{"n":4,"t":"La Grotte de Lascaux","g":{"rj":{"N":[["an","un an"],["artiste","un artiste"],["peinture","une peinture"],["grotte","la grotte"],["animal","un animal / des animaux"],["signe","un signe"]],"A":["réalisé",["pariétal","pariétal(s) / pariétale(s)"],["impressionnant","impressionnant(s) / impressionnante(s)"],"nombreux","mystérieux"],"V":["voir"],"I":["jadis","il y a","plus","mais","aussi"]},"vert":{"N":[["être","un être / des êtres"],["Préhistoire","la Préhistoire"],["main","une main"],["personnage","un personnage"],["scène","la scène"],["combat","le combat"],["chasseur","un chasseur"],["bison","un bison"]],"A":[["humain","humain(s)"],["entier","entier(s)"],"blessé"],"V":["raconter"],"I":["souvent","pendant","mais","très","peu","au fond","entre"]},"violet":{"N":[["homme","l'homme"],["spécialiste","un spécialiste"]],"A":["dessiné"],"V":["étonner"],"I":["beaucoup","précisément"]}}},{"n":5,"t":"Les Quatre Saisons","g":{"rj":{"N":[["musique","la musique"],["Europe","l'Europe"],["instrument","un instrument"],["mélodie","une mélodie"],["violon","un violon"]],"A":["classique",["différent","différent(s) / différente(s)"]],"V":["composer","jouer"],"I":["ensemble","chaque"]},"vert":{"N":[["arrivée","l'arrivée"],["printemps","le printemps"],["oiseau","un oiseau / des oiseaux"],["été","l'été"],["insecte","un insecte"],["orage","l'orage"],["pluie","la pluie"]],"A":[["premier","premier / première"],"deuxième",["fleuri","fleuri(s) / fleurie(s)"],["petit","petit(s)"],["affolé","affolé(s)"],["fort","fort(e)"]],"V":["décrire","se coucher"],"I":["d'abord","ensuite","sous"]},"violet":{"N":[["automne","l'automne"],["chasseur","un chasseur"],["chien","le chien"],["neige","la neige"],["hiver","l'hiver"],["froid","le froid"]],"A":["troisième","dernier",["fidèle","fidèle(s)"],["long","long / longue"]],"V":["raconter"],"I":["dans","avec","enfin"]}}},{"n":6,"t":"La trahison des images","g":{"rj":{"N":[["fête","la fête"],["année","une année"],["femme","une femme"],["modèle","un modèle"],["artiste","un artiste"]],"A":[["forain","forain / foraine"],"belge"],"V":["rencontrer","rêver","devenir"],"I":["quand","plus","tard","plusieurs"]},"vert":{"N":[["affiche","une affiche"],["publicité","une publicité"],["époux","un époux"],["France","la France"],"Paris"],"A":[["entier","entier / entière"]],"V":["déménager","gagner","dessiner","s'installer"],"I":["d'abord","ensuite","près","là"]},"violet":{"N":[["peintre","un peintre"],["poète","un poète"],["écrivain","un écrivain"],["musicien","un musicien"],["rêve","le rêve"],["imagination","l'imagination"],["hasard","le hasard"],["mot","le mot"],["image","l'image"]],"A":["étrange"],"V":["s'intéresser","jouer"],"I":["comme","avec"]}}},{"n":7,"t":"Persée et Méduse","g":{"rj":{"N":[["tête","la tête"],["mère","sa mère"],["créature","une créature"],["cheveu","le cheveu / les cheveux"],["serpent","un serpent"],["pierre","une pierre"]],"A":[["monstrueux","monstrueux / monstrueuse"],["vivant","vivant(s) / vivante(s)"]],"V":["devoir","apporter","épouser","regarder"],"I":["celui-ci","dont","aussitôt"]},"vert":{"N":[["dieu","un dieu / des dieux"],["conseil","un conseil"],["objet","un objet"],["sandale","une sandale"],["montagne","une montagne"],["casque","son casque"]],"A":[["magique","magique(s)"],["ailé","ailé(s) / ailée(s)"],"invisible"],"V":["donner","rejoindre","habiter","se coiffer","être"],"I":["avec","puis","afin"]},"violet":{"N":[["bouclier","le bouclier"],["reflet","le reflet"]],"A":[["pétrifié","pétrifié(e)"],"terrible"],"V":["pouvoir","risquer","bondir"],"I":["sans","soudain"]}}},{"n":8,"t":"La Naissance de Vénus","g":{"rj":{"N":[["tableau","ce tableau"],["scène","une scène"],["naissance","la naissance"],["déesse","une déesse"],["beauté","la beauté"],["coquillage","un coquillage"],["rivage","le rivage"],["vent","le vent"]],"A":[["inspiré","inspiré(e)"],"gigantesque",["guidé","guidé(e)"]],"V":["représenter","naviguer"],"I":["sur","celui-ci","vers"]},"vert":{"N":[["chevelure","sa chevelure"],["gauche","la gauche"],["dieu","le dieu"],["vent","le vent"],["femme","sa femme"],["fleur","une fleur"]],"A":[["habillé","habillé(e)"],["long","long / longue"]],"V":["distinguer","souffler"],"I":["seulement","à côté","autour"]},"violet":{"N":[["droite","la droite"],["œuvre","l'œuvre"],["arrivée","l'arrivée"],["printemps","le printemps"]],"A":[["grand","grand(e)"],["fleuri","fleuri(e)"]],"V":["guetter","recouvrir"],"I":["également"]}}},{"n":9,"t":"Le château de Bonaguil","g":{"rj":{"N":[["Moyen-Âge","le Moyen-Âge"],["château","le château"],["habitant","un habitant"],["hauteur","une hauteur"],["vue","une vue"],["région","la région"],["rempart","un rempart"],["tour","une tour"]],"A":["fort","plongeant","large","construit"],"V":["protéger"],"I":["ainsi","plusieurs"]},"vert":{"N":[["ennemis","des ennemis"],["seigneur","le seigneur"],["famille","sa famille"],["donjon","le donjon"]],"A":["haut"],"V":["permettre","voir","être","surgir","loger"],"I":["sans","lorsque","quelquefois","souvent"]},"violet":{"N":[["travail","le travail / les travaux"],["villageois","le villageois"],["cas","un cas"],["danger","le danger"],["puissance","la puissance"],["argent","de l'argent"]],"A":[["prestigieux","prestigieux / prestigieuse"],"grand"],"V":["se réfugier"],"I":["parfois","aussi","plus"]}}},{"n":10,"t":"Jaune-rouge-bleu","g":{"rj":{"N":[["jour","un jour"],["atelier","son atelier"],["tableau","un tableau"],["sens","le sens"],["réalité","la réalité"]],"A":[["subjugués","subjugué(e)s"],["intéressants","intéressant(e)s"],["débarrassés","débarrassé(e)s"]],"V":["raconter","chercher","représenter"],"I":["à l'envers","plus","dans"]},"vert":{"N":[["couleur","la couleur"],["émotion","une émotion"],["composition","la composition"],["ligne","la ligne"],["gauche","la gauche"],["droite","la droite"]],"A":[["géométrique","géométrique(s)"],["utilisés","utilisé(e)s"],["organisé","organisé(e)"],"brisé","chaud","froid"],"V":["traduire"],"I":["pour"]},"violet":{"N":[["rectangle","un rectangle"],["croix","une croix"],["cercle","un cercle"],["cœur","le cœur"],["image","une image"],["imagination","son imagination"]],"A":["jaune","rouge","bleu"],"V":["pouvoir","voir"],"I":["mais","selon"]}}},{"n":11,"t":"Summertime","g":{"rj":{"N":[["début","le début"],["siècle","un siècle"],["Amérique","l'Amérique"],["artiste","un artiste"],["jazz","le jazz"],["chant","un chant"],["esclave","un esclave"],["Afrique","l'Afrique"],["force","la force"],["champ","un champ / des champs"]],"A":["noir"],"V":["inventer","s'inspirer","travailler"],"I":["pour","dans"]},"vert":{"N":[["instrument","un instrument"],["guitare","la guitare"],["trompette","la trompette"],["piano","le piano"],["batterie","la batterie"],["rôle","un rôle"],["musique","la musique"]],"A":["important"],"V":["écouter","entendre"],"I":["quand","surtout","comme","très","encore","aujourd'hui"]},"violet":{"N":[["possibilité","la possibilité"]],"V":["improviser","jouer"],"I":["quelquefois","sans","au fur et à mesure"]}}}];
+  var CATS = [['N', 'Noms'], ['A', 'Adjectifs et participes passés'], ['V', 'Verbes'], ['I', 'Mots invariables']];
+  var GROUPES = [
+    { id: 'rouge', nom: 'Rouge', niv: ['rj'], aide: 'Tu apprends les mots du groupe rouge et jaune. Le jour J : dictée à trous.' },
+    { id: 'jaune', nom: 'Jaune', niv: ['rj'], aide: 'Tu apprends les mots du groupe rouge et jaune. Le jour J : tu écris tout le texte.' },
+    { id: 'vert', nom: 'Vert', niv: ['rj', 'vert'], aide: 'Tu apprends les mots rouges et jaunes, puis les mots verts.' },
+    { id: 'violet', nom: 'Violet', niv: ['rj', 'vert', 'violet'], aide: 'Tu apprends tous les mots : rouges et jaunes, verts, puis violets.' }
+  ];
+  var NIV_NOM = { rj: 'rouge et jaune', vert: 'vert', violet: 'violet' };
+  function groupe(id) { return GROUPES.filter(function (g) { return g.id === id; })[0]; }
+  function dictee(n) { return DICTEES.filter(function (d) { return d.n === n; })[0]; }
+  function dicteeList(n) { return lists.filter(function (l) { return l.dictee === n; })[0]; }
+  function isFaite(n) { return !!dict.faites[n]; }
+  // Mots d'une dictée pour un groupe, sans doublon, rangés par catégorie.
+  function dicteeWords(d, gid) {
+    var g = groupe(gid), seen = {}, out = [];
+    CATS.forEach(function (c) {
+      g.niv.forEach(function (niv) {
+        ((d.g[niv] || {})[c[0]] || []).forEach(function (x) {
+          var w = typeof x === 'string' ? x : x[0], k = keyOf(w);
+          if (seen[k]) return;
+          seen[k] = 1;
+          out.push({ w: w, tip: typeof x === 'string' ? '' : x[1], cat: c[0], niv: niv });
+        });
+      });
+    });
+    return out;
+  }
+  // Choisir (ou changer) le groupe d'une dictée : la liste de mots est refaite,
+  // en gardant les réglages déjà faits sur un mot (syllabes, lettres) et les mots ajoutés à la main.
+  function setGroupe(n, gid) {
+    var d = dictee(n), l = dicteeList(n), fresh = dicteeWords(d, gid), all = {}, old = {};
+    dicteeWords(d, 'violet').forEach(function (x) { all[keyOf(x.w)] = 1; });
+    if (l) l.words.forEach(function (w) { old[keyOf(w.w)] = w; });
+    var words = fresh.map(function (x) { return old[keyOf(x.w)] || { w: x.w, syl: '', marks: {}, tip: x.tip }; });
+    if (l) l.words.forEach(function (w) { if (!all[keyOf(w.w)]) words.push(w); });
+    if (!l) {
+      l = { id: 'dictee-' + n, name: 'Dictée ' + n + ' · ' + d.t, test: '', created: Date.now(), dictee: n, words: [] };
+      lists.push(l);
+    }
+    l.groupe = gid;
+    l.words = words;
+    saveLists(); saveDict();
+  }
+
   /* ---------- Répétition espacée (boîtes de Leitner) ---------- */
   // Boîte 0 : nouveau. Réussi : boîte suivante, revient dans 2, 4 puis 8 jours. Boîte 4 : trésor (revu dans 21 jours).
   // Raté : revient demain. La boîte ne descend jamais. Seul le premier essai de la journée compte.
@@ -849,12 +964,14 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   function inTreasure(k) { return !!(prog[k] && prog[k].box >= 4); }
   function allWords() {
     // Mots de toutes les listes, sans doublon (le même mot partage ses progrès entre listes).
+    // Un mot qui n'est que dans des dictées cochées « faite » n'est plus proposé comme nouveau (mais reste révisé).
     var seen = {}, out = [];
     lists.slice().reverse().forEach(function (l) {
+      var paused = !!(l.dictee && isFaite(l.dictee));
       l.words.forEach(function (w) {
         var k = keyOf(w.w);
-        if (seen[k]) { if (l.test && (!seen[k].test || l.test < seen[k].test)) seen[k].test = l.test; return; }
-        seen[k] = { w: w, k: k, list: l.id, test: l.test || '', created: l.created || 0 };
+        if (seen[k]) { if (!paused) seen[k].paused = false; if (l.test && (!seen[k].test || l.test < seen[k].test)) seen[k].test = l.test; return; }
+        seen[k] = { w: w, k: k, list: l.id, test: l.test || '', created: l.created || 0, paused: paused };
         out.push(seen[k]);
       });
     });
@@ -873,7 +990,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     var due = all.filter(function (e) { return isDue(e, t); }).sort(function (a, b) {
       return (testSoon(b, t) - testSoon(a, t)) || ((a.test || 'z').localeCompare(b.test || 'z')) || (P(a.k).box - P(b.k).box) || P(a.k).due.localeCompare(P(b.k).due);
     });
-    var fresh = all.filter(isNew).sort(function (a, b) {
+    var fresh = all.filter(function (e) { return isNew(e) && !e.paused; }).sort(function (a, b) {
       return (testSoon(b, t) - testSoon(a, t)) || ((a.test || 'z').localeCompare(b.test || 'z')) || (b.created - a.created);
     });
     return due.concat(fresh).slice(0, size);
@@ -1519,7 +1636,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   };
 
   /* ---------- Écrans ---------- */
-  var views = ['home', 'play', 'done', 'treasure', 'parent', 'edit', 'import', 'reglages'];
+  var views = ['home', 'play', 'done', 'treasure', 'parent', 'edit', 'import', 'reglages', 'dictee'];
   function show(name) {
     views.forEach(function (v) { $('#' + v).hidden = v !== name; });
     document.body.classList.toggle('playing', name === 'play');
@@ -1549,8 +1666,8 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   function renderHome() {
     var t = today(), panel = $('#todayPanel');
     if (!lists.length) {
-      panel.innerHTML = '<div class="empty-state"><p>Pas encore de mots à apprendre.</p><p class="hint">Un parent ajoute la liste de mots de l\'école, et c\'est parti !</p>' +
-        '<button class="btn btn-action" type="button" id="firstList">+ Ajouter une liste de mots</button></div>';
+      panel.innerHTML = '<div class="empty-state"><p>Pas encore de mots à apprendre.</p><p class="hint">Touche une dictée plus bas et choisis ton groupe. Tu peux aussi ajouter une liste de mots à toi.</p>' +
+        '<button class="btn btn-doux" type="button" id="firstList">+ Ajouter une liste de mots</button></div>';
       $('#firstList').addEventListener('click', function () { openEditor(null); });
     } else {
       var picks = dailyPick(t, prefs.size), doneToday = log[t] && log[t].daily;
@@ -1572,10 +1689,12 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
           '<p><span class="say">Tout est au chaud !</span>Aucun mot à revoir aujourd\'hui.</p></div>';
       }
     }
-    $('#listsPanel').hidden = !lists.length;
+    renderHomeDicts();
+    var own = lists.filter(function (l) { return !l.dictee; });
+    $('#listsPanel').hidden = !own.length;
     var ul = $('#homeLists');
     ul.innerHTML = '';
-    lists.forEach(function (l) {
+    own.forEach(function (l) {
       var st = listStats(l), li = document.createElement('li'), tl = testLabel(l);
       li.innerHTML = '<div class="info"><span class="name">' + esc(l.name) + '</span><span class="sub">' + st.n + ' mots' + (tl ? ' · ' + tl : '') + ' · ' + st.gold + ' dans le trésor</span>' +
         '<div class="minibar"><i style="width:' + (st.n ? Math.round(100 * st.gold / st.n) : 0) + '%"></i></div></div>' +
@@ -1589,6 +1708,103 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     show('home');
   }
   $('#chestBtn').addEventListener('click', renderTreasure);
+
+  /* ---------- Dictées ---------- */
+  function setFaite(n, on) {
+    if (on) dict.faites[n] = today(); else delete dict.faites[n];
+    saveDict();
+  }
+  function renderHomeDicts() {
+    var ul = $('#homeDicts');
+    ul.innerHTML = '';
+    DICTEES.forEach(function (d) {
+      var l = dicteeList(d.n), g = l && groupe(l.groupe), faite = isFaite(d.n), li = document.createElement('li');
+      var sub;
+      if (g) {
+        var st = listStats(l), tl = testLabel(l);
+        sub = '<i class="gdot ' + g.id + '"></i>' + g.nom + ' · ' + st.n + ' mots · ' + st.gold + ' au trésor' + (tl && !faite ? ' · ' + tl : '');
+      } else sub = 'Choisis ton groupe';
+      if (faite) sub += ' · faite ✓';
+      li.className = faite ? 'faite' : '';
+      li.innerHTML = '<label class="coche"><input type="checkbox"' + (faite ? ' checked' : '') + ' aria-label="Dictée ' + d.n + ' faite"></label>' +
+        '<button class="dict-open" type="button"><span class="info"><span class="etiquette">Dictée ' + d.n + '</span><span class="name">' + esc(d.t) + '</span><span class="sub">' + sub + '</span></span><span class="chev" aria-hidden="true">›</span></button>';
+      li.querySelector('input').addEventListener('change', function (e) { setFaite(d.n, e.target.checked); renderHome(); });
+      li.querySelector('.dict-open').addEventListener('click', function () { renderDictee(d.n); });
+      ul.appendChild(li);
+    });
+  }
+  var curDictee = 0;
+  function renderDictee(n) {
+    var d = dictee(n), l = dicteeList(n), gid = l ? l.groupe : '';
+    curDictee = n;
+    $('#dNum').textContent = d.n;
+    $('#dTitle').textContent = d.t;
+    $('#dFaite').checked = isFaite(n);
+    $('#dGroupes').innerHTML = GROUPES.map(function (g) {
+      return '<button type="button" role="radio" aria-checked="' + (g.id === gid) + '" data-g="' + g.id + '"><i class="gdot ' + g.id + '"></i>' + g.nom + '</button>';
+    }).join('');
+    var g = groupe(gid);
+    $('#dAide').textContent = g ? g.aide : 'Choisis ton groupe pour cette dictée. Tu peux en changer quand tu veux.';
+    $('#dDateField').hidden = !l;
+    $('#dDate').value = l ? l.test || '' : '';
+    var box = $('#dMots');
+    if (!l) {
+      $('#dCount').textContent = 'Les mots';
+      box.innerHTML = '<p class="hint">Les mots apparaîtront ici quand tu auras choisi ton groupe.</p>';
+    } else {
+      var cat = {}, extra = [], seen = {}, levels = {};
+      dicteeWords(d, 'violet').forEach(function (x) { cat[keyOf(x.w)] = x; });
+      var byCat = {};
+      l.words.forEach(function (w) {
+        var k = keyOf(w.w), x = cat[k];
+        if (seen[k]) return;
+        seen[k] = 1;
+        if (!x) { extra.push(w); return; }
+        levels[x.niv] = 1;
+        (byCat[x.cat] = byCat[x.cat] || []).push({ w: w, niv: x.niv });
+      });
+      var chip = function (o) {
+        var k = keyOf(o.w.w);
+        return '<li class="' + (inTreasure(k) ? 'gold' : '') + '">' + (o.niv ? '<i class="gdot ' + o.niv + '" aria-label="groupe ' + NIV_NOM[o.niv] + '"></i>' : '') + esc(o.w.w) + '</li>';
+      };
+      var html = '';
+      var nl = Object.keys(levels);
+      if (nl.length > 1) html += '<div class="legende">' + ['rj', 'vert', 'violet'].filter(function (v) { return levels[v]; }).map(function (v) { return '<span><i class="gdot ' + v + '"></i>' + NIV_NOM[v] + '</span>'; }).join('') + '</div>';
+      CATS.forEach(function (c) {
+        if (!byCat[c[0]]) return;
+        html += '<div><h3>' + c[1] + '</h3><ul class="chips">' + byCat[c[0]].map(chip).join('') + '</ul></div>';
+      });
+      if (extra.length) html += '<div><h3>Mots en plus</h3><ul class="chips">' + extra.map(function (w) { return chip({ w: w }); }).join('') + '</ul></div>';
+      var n = Object.keys(seen).length;
+      $('#dCount').textContent = n + ' mots à apprendre';
+      box.innerHTML = html;
+      if (!nl.length && !extra.length) box.innerHTML = '<p class="hint">Aucun mot.</p>';
+    }
+    $('#dPlus').hidden = !l;
+    $('#dGo').disabled = !l || !l.words.length;
+    show('dictee');
+  }
+  $('#dGroupes').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-g]');
+    if (!b) return;
+    setGroupe(curDictee, b.getAttribute('data-g'));
+    sound('key');
+    renderDictee(curDictee);
+  });
+  $('#dFaite').addEventListener('change', function (e) { setFaite(curDictee, e.target.checked); });
+  $('#dDate').addEventListener('change', function (e) {
+    var l = dicteeList(curDictee);
+    if (l) { l.test = e.target.value || ''; saveLists(); }
+  });
+  $('#dGo').addEventListener('click', function () {
+    var l = dicteeList(curDictee);
+    if (l) startSession(listPick(l.id, prefs.size), 'list');
+  });
+  $('#dPlus').addEventListener('click', function () {
+    var l = dicteeList(curDictee);
+    if (l) { editBack = curDictee; openEditor(l.id); }
+  });
+  $('#dBack').addEventListener('click', renderHome);
 
   /* ---------- Trésor ---------- */
   function renderTreasure() {
@@ -1846,7 +2062,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
       var st = listStats(l), tl = testLabel(l), li = document.createElement('li');
       li.innerHTML = '<div class="info"><span class="name">' + esc(l.name) + '</span><span class="sub">' + st.n + ' mots' + (tl ? ' · ' + tl : '') + ' · ' + st.started + ' commencés · ' + st.gold + ' dans le trésor</span></div>' +
         '<button class="btn btn-petit" type="button">Modifier</button>';
-      li.querySelector('button').addEventListener('click', function () { openEditor(l.id); });
+      li.querySelector('button').addEventListener('click', function () { editBack = 0; openEditor(l.id); });
       ul.appendChild(li);
     });
     $('#presetBtn').hidden = lists.some(function (l) { return l.id === PRESET.id; });
@@ -1883,7 +2099,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     document.querySelectorAll('input[name="size"]').forEach(function (r) { r.checked = +r.value === prefs.size; });
     show('reglages');
   });
-  $('#setBack').addEventListener('click', function () { if (backFromSettings === 'parent') renderParent(); else renderHome(); });
+  $('#setBack').addEventListener('click', function () { if (backFromSettings === 'parent') renderParent(); else if (backFromSettings === 'dictee') renderDictee(curDictee); else renderHome(); });
   document.querySelectorAll('input[name="size"]').forEach(function (r) {
     r.addEventListener('change', function () { prefs.size = +r.value; savePrefs(); });
   });
@@ -1896,19 +2112,19 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   $('#resetBtn').addEventListener('click', function () {
     var btn = $('#resetBtn');
     if (!resetTimer) {
-      btn.textContent = 'Toucher encore pour tout effacer (listes et progrès)';
+      btn.textContent = 'Toucher encore pour tout effacer (listes, progrès et dictées faites)';
       resetTimer = setTimeout(function () { resetTimer = null; btn.textContent = 'Tout effacer sur cet appareil'; }, 4000);
       return;
     }
     clearTimeout(resetTimer); resetTimer = null;
     btn.textContent = 'Tout effacer sur cet appareil';
-    lists = []; prog = {}; log = {};
-    [KEYS.lists, KEYS.prog, KEYS.log].forEach(store.del);
+    lists = []; prog = {}; log = {}; dict = { faites: {} };
+    [KEYS.lists, KEYS.prog, KEYS.log, KEYS.dict].forEach(store.del);
     renderHome();
   });
 
   /* ---------- Modifier une liste ---------- */
-  var E = null;
+  var E = null, editBack = 0;
   function parseWords(text) {
     return text.split(/[\n,;\t]+/).map(function (s) {
       return norm(s.replace(/^\s*(?:[-•*·–—]|\d+\s*[.)-])\s*/, ''));
@@ -1981,7 +2197,13 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     });
   }
   $('#edAdd').addEventListener('click', addPasted);
-  $('#edCancel').addEventListener('click', function () { E = null; renderParent(); });
+  // Après l'éditeur : retour à la dictée si on venait de là, sinon à l'espace parent.
+  function leaveEditor() {
+    var n = editBack;
+    E = null; editBack = 0;
+    if (n) renderDictee(n); else renderParent();
+  }
+  $('#edCancel').addEventListener('click', leaveEditor);
   $('#edSave').addEventListener('click', function () {
     addPasted();
     if (!E.words.length) { $('#edPaste').focus(); return; }
@@ -1991,8 +2213,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     var i = lists.findIndex(function (x) { return x.id === E.id; });
     if (i >= 0) lists[i] = E; else lists.push(E);
     saveLists();
-    E = null;
-    renderParent();
+    leaveEditor();
   });
   var delTimer = null;
   $('#edDelete').addEventListener('click', function () {
@@ -2006,8 +2227,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     btn.textContent = 'Supprimer la liste';
     lists = lists.filter(function (x) { return x.id !== E.id; });
     saveLists();
-    E = null;
-    renderParent();
+    leaveEditor();
   });
 
   /* ---------- Partager une liste par un lien (les mots sont dans le lien, rien n'est stocké en ligne) ---------- */
