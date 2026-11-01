@@ -1,6 +1,7 @@
 // Vérifie sur le site EN LIGNE, au format de plusieurs téléphones, qu'une séance se déroule
 // sans ascenseur (voir le mot, l'écrire au clavier, se tromper, recopier) et sans erreur dans la console.
-// Vérifie aussi l'écran d'une dictée (choix du groupe, case « faite ») : rien ne dépasse sur le côté.
+// Vérifie aussi l'écran d'une dictée (choix du groupe, case « faite ») : rien ne dépasse sur le côté,
+// et les questions sur les lettres (méthode de l'orthophoniste) : pas d'ascenseur.
 // Usage : node tests/telephone.cjs [url]   (captures dans captures/)
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -25,7 +26,7 @@ const LIST = [{ id: 'test', name: 'Liste d\'essai', test: '', created: 1, words:
   }
 
   const browser = await chromium.launch();
-  const lines = ['| Écran | Voir | Écrire | Erreur | Recopier | Dictée | Console |', '|---|---|---|---|---|---|---|'];
+  const lines = ['| Écran | Voir | Écrire | Erreur | Recopier | Dictée | Questions | Console |', '|---|---|---|---|---|---|---|---|'];
   let failed = false;
   for (const [w, h] of SIZES) {
     const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
@@ -75,9 +76,20 @@ const LIST = [{ id: 'test', name: 'Liste d\'essai', test: '', created: 1, words:
     await page.click('#homeDicts li:nth-child(1) .coche input');
     res.dictee = Math.max(res.dictee, await side());
     await page.screenshot({ path: `captures/${w}x${h}-6-accueil.png`, fullPage: true });
+    // Questions sur les lettres pour tous les nouveaux mots (réglage ⚙), puis séance sur la dictée 1.
+    await page.click('#gearBtn');
+    await page.click('input[name="quiz"][value="nouveaux"] + span');
+    await page.click('#setBack');
+    await page.click('#homeDicts li:nth-child(1) .dict-open');
+    await page.click('#dGo');
+    await page.click('#seenBtn');
+    await page.waitForSelector('#pave');
+    await page.click('#pave [data-n="1"]');
+    res.questions = await over();
+    await page.screenshot({ path: `captures/${w}x${h}-7-questions.png` });
     const cell = d => (d > 0 ? `❌ dépasse de ${d} px` : '✅');
     if (Object.values(res).some(d => d > 0) || errors.length) failed = true;
-    lines.push(`| ${w}×${h} | ${cell(res.voir)} | ${cell(res.ecrire)} | ${cell(res.erreur)} | ${cell(res.recopier)} | ${cell(res.dictee)} | ${errors.length ? '❌ ' + errors.join(' / ') : '✅'} |`);
+    lines.push(`| ${w}×${h} | ${cell(res.voir)} | ${cell(res.ecrire)} | ${cell(res.erreur)} | ${cell(res.recopier)} | ${cell(res.dictee)} | ${cell(res.questions)} | ${errors.length ? '❌ ' + errors.join(' / ') : '✅'} |`);
     await page.close();
   }
   await browser.close();
