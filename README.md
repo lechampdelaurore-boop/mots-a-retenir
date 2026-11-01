@@ -15,6 +15,18 @@ En cas d'erreur, la carte secoue la tête, les lettres à revoir clignotent, et 
 
 Les mots longs (3 syllabes ou plus) s'apprennent d'abord par morceaux, puis en entier.
 
+## Questions sur les lettres (méthode de l'orthophoniste)
+
+Pour les mots difficiles, une étape en plus avant d'écrire le mot :
+
+1. Le mot s'affiche : on retient bien toutes les lettres, puis « Je l'ai dans la tête ».
+2. Le mot disparaît. Question 1 : **combien de lettres ?** (pavé de chiffres ; espaces, apostrophes et tirets ne comptent pas).
+3. Puis, dans le désordre : **quelle est la 3e lettre ? la 5e ?**… jusqu'à ce que toutes les lettres soient faites. On répond en touchant la lettre.
+4. Une réponse fausse : le mot réapparaît (lettres numérotées, ou la lettre demandée qui clignote), et la question revient un peu plus tard.
+5. Toutes les lettres trouvées : on écrit le mot en entier, comme d'habitude.
+
+Réglage dans ⚙ : **Jamais**, **Mots difficiles** (par défaut : un mot raté la dernière fois, ou raté pendant la séance) ou **Nouveaux et difficiles** (en plus, chaque mot vu pour la première fois).
+
 ## Les dictées de l'école
 
 Les 11 dictées de la fiche « Listes des mots à apprendre » sont déjà dans l'appli, sur l'accueil.

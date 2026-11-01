@@ -456,6 +456,22 @@ body.playing .entete { display: none; }
   .playbar .rond { width: 42px; height: 42px; }
 }
 
+/* Questions sur les lettres (méthode de l'orthophoniste) */
+.seg-texte span { font-size: .95rem; line-height: 1.1; text-align: center; padding: 4px 6px; min-height: 56px; }
+.q-ordinal { font-family: var(--display); font-weight: 700; font-size: clamp(1.5rem, 7vw, 2rem); line-height: 1.1; margin: 0; }
+.q-cases { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: 100%; }
+.q-cases i { width: 26px; height: 32px; border: 2.5px solid var(--line); border-radius: 8px; background: var(--surface2); display: grid; place-items: center; font: 900 .95rem var(--display); font-style: normal; color: var(--on-good); }
+.q-cases i.fait { background: var(--good); }
+.q-cases i.ici { background: var(--sun); color: var(--on-sun); transform: translateY(-4px); box-shadow: 0 4px 0 var(--line); }
+.q-cases b { width: 8px; }
+.q-nombre { font: 900 2.6rem var(--display); min-width: 3ch; min-height: 62px; display: grid; place-items: center; padding: 0 16px; background: var(--surface); border: var(--bord) solid var(--line); border-radius: var(--r-touche); margin: 0 auto; }
+.pave { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; }
+.pave .touche { min-height: 54px; padding: 0; font: 700 1.6rem var(--display); border-width: 2.5px; border-radius: 12px; box-shadow: 0 3px 0 var(--line); display: grid; place-items: center; }
+.pave .touche svg { width: 26px; height: 26px; }
+.word .n { position: absolute; left: 0; right: 0; top: 100%; font: 800 .32em var(--display); color: var(--muted); text-align: center; }
+.word.numerote { margin-bottom: .45em; }
+@media (max-height: 640px) { .pave .touche { min-height: 44px; } .q-nombre { min-height: 50px; font-size: 2.1rem; } }
+
 /* Bilan */
 .done-top { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center; }
 .done-top svg { width: 130px; height: 130px; overflow: visible; }
@@ -688,6 +704,13 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
           <label><input type="radio" name="size" value="8"><span>8</span></label>
           <label><input type="radio" name="size" value="10"><span>10</span></label>
         </div>
+        <p class="hint">🧩 Questions sur les lettres (méthode de l'orthophoniste)</p>
+        <div class="seg seg-texte" role="radiogroup" aria-label="Questions sur les lettres">
+          <label><input type="radio" name="quiz" value="non"><span>Jamais</span></label>
+          <label><input type="radio" name="quiz" value="difficiles"><span>Mots difficiles</span></label>
+          <label><input type="radio" name="quiz" value="nouveaux"><span>Nouveaux et difficiles</span></label>
+        </div>
+        <p class="hint">Le mot s'affiche, puis il disparaît et l'appli pose des questions : combien de lettres ? quelle est la 3e lettre ?… jusqu'à toutes les lettres. Ensuite, on écrit le mot. Mot difficile : raté la dernière fois.</p>
       </div>
       <button class="btn btn-action" type="button" id="setBack">Retour</button>
     </section>
@@ -749,7 +772,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   var lists = store.get(KEYS.lists, []);
   var prog = store.get(KEYS.prog, {});
   var log = store.get(KEYS.log, {});
-  var prefs = Object.assign({ sound: true, anim: true, voice: true, syl: true, size: 6 }, store.get(KEYS.prefs, {}));
+  var prefs = Object.assign({ sound: true, anim: true, voice: true, syl: true, size: 6, quiz: 'difficiles' }, store.get(KEYS.prefs, {}));
   if (!Array.isArray(lists)) lists = [];
   // Dictées cochées « faite » : { faites: { numéro: date } }.
   var dict = store.get(KEYS.dict, {});
@@ -846,7 +869,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   // opts.later : index à partir duquel les lettres sont pâles ; opts.hl : index des lettres à faire clignoter.
   function wordHTML(w, opts) {
     opts = opts || {};
-    var marks = w.marks || {}, html = '', n = 0;
+    var marks = w.marks || {}, html = '', n = 0, pos = 0;
     segments(w).forEach(function (sg) {
       var cls = sg.k === 's' ? 's' + (n++ % 2 + 1) : 'sep';
       for (var c = 0; c < sg.t.length; c++) {
@@ -855,7 +878,9 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
         if (marks[idx] === 'p') cl += ' p';
         if (opts.later != null && idx >= opts.later) cl += ' later';
         if (opts.hl && opts.hl.indexOf(idx) >= 0) cl += ' hl';
-        html += '<span class="' + cl + '">' + (sg.t[c] === ' ' ? '&nbsp;' : esc(sg.t[c])) + '</span>';
+        // opts.num : petit numéro sous chaque lettre (pour compter les lettres).
+        var num = opts.num && LETTER.test(sg.t[c]) ? '<span class="n">' + (++pos) + '</span>' : '';
+        html += '<span class="' + cl + '">' + (sg.t[c] === ' ' ? '&nbsp;' : esc(sg.t[c])) + num + '</span>';
       }
     });
     return html;
@@ -1025,6 +1050,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
       } else {
         p.due = addDays(t, 1);
       }
+      p.ko = !ok;
       p.last = t;
     }
     prog[k] = p;
@@ -1847,7 +1873,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     if (!entries.length) return;
     G = {
       kind: kind, total: entries.length, done: 0,
-      queue: entries.map(function (e) { return { e: e, steps: buildSteps(e) }; }),
+      queue: entries.map(function (e) { var q = needQuiz(e); return { e: e, quiz: q, steps: q ? [{ target: e.w.w, locked: 0 }] : buildSteps(e) }; }),
       results: {}, order: [], gained: [], requeued: {}
     };
     show('play');
@@ -1857,6 +1883,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     clearTimeout(hideTimer);
     if (!G.queue.length) { finish(); return; }
     G.item = G.queue.shift();
+    G.q = null;
     G.step = 0;
     G.views = 0;
     startStep();
@@ -1893,12 +1920,139 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     G.phase = 'see';
     updateMeter();
     hideCreature();
-    var st = cur(), label = st.piece ? 'Morceau ' + st.piece + ' sur ' + st.pieces : st.whole ? 'Maintenant le mot entier' : 'Regarde bien le mot';
+    var st = cur(), quiz = G.item.quiz && !G.item.quizDone && G.step === 0 && G.attempt === 0;
+    var label = quiz ? 'Retiens bien toutes les lettres' : st.piece ? 'Morceau ' + st.piece + ' sur ' + st.pieces : st.whole ? 'Maintenant le mot entier' : 'Regarde bien le mot';
     setCard('', sayBtn() + '<p class="etiquette">' + label + '</p>' + bigWord(st.piece ? { later: st.target.length } : null) + tipHTML());
     $('#bottom').innerHTML = '<button class="btn btn-action" type="button" id="seenBtn">Je l\'ai dans la tête</button>';
-    $('#seenBtn').addEventListener('click', phaseHide);
+    $('#seenBtn').addEventListener('click', quiz ? quizNext : phaseHide);
     if (G.step === 0 && G.attempt === 0 && !G.views) speak(G.item.e.w.w);
   }
+  // 1 bis. Questions sur les lettres (méthode de l'orthophoniste), pour les mots difficiles.
+  // Le mot disparaît. « Combien de lettres ? », puis « Quelle est la 3e lettre ? »… dans le désordre,
+  // jusqu'à ce que toutes les lettres soient faites. Une réponse fausse : on revoit le mot, la question revient plus tard.
+  var ORD = ['première', 'deuxième', 'troisième', 'quatrième', 'cinquième', 'sixième', 'septième', 'huitième', 'neuvième', 'dixième',
+    'onzième', 'douzième', 'treizième', 'quatorzième', 'quinzième', 'seizième', 'dix-septième', 'dix-huitième', 'dix-neuvième', 'vingtième'];
+  function ordinal(n) { return ORD[n - 1] || n + 'e'; }
+  function needQuiz(e) {
+    if (prefs.quiz === 'non' || !prefs.quiz) return false;
+    var p = P(e.k);
+    if (p && !inTreasure(e.k) && (p.ko !== undefined ? p.ko : p.miss > 0 && p.box < 2)) return true;
+    return prefs.quiz === 'nouveaux' && isNew(e);
+  }
+  // Index (dans le mot) de chaque lettre : espaces, apostrophes et tirets ne comptent pas.
+  function letterIdx(w) { var out = []; for (var i = 0; i < w.length; i++) if (LETTER.test(w[i])) out.push(i); return out; }
+  function quizNext() {
+    var w = G.item.e.w.w;
+    if (!G.q) {
+      var idx = letterIdx(w), order = [];
+      for (var i = 1; i <= idx.length; i++) order.push(i);
+      G.q = { idx: idx, todo: ['n'].concat(shuffle(order)), done: {}, typed: '', total: idx.length + 1, asked: 0 };
+    }
+    if (!G.q.todo.length) { quizEnd(); return; }
+    G.phase = 'quiz';
+    G.q.cur = G.q.todo[0];
+    G.q.typed = '';
+    hideCreature();
+    if (G.q.cur === 'n') quizCount(); else quizLetter();
+  }
+  function quizHead() { return '<p class="etiquette">Question ' + Math.min(G.q.asked + 1, G.q.total) + ' sur ' + G.q.total + '</p>'; }
+  function casesHTML() {
+    var w = G.item.e.w.w, html = '', pos = 0;
+    for (var i = 0; i < w.length; i++) {
+      if (!LETTER.test(w[i])) { html += '<b></b>'; continue; }
+      pos++;
+      html += '<i class="' + (G.q.done[pos] ? 'fait' : pos === G.q.cur ? 'ici' : '') + '">' + (G.q.done[pos] ? '✓' : pos === G.q.cur ? '?' : '') + '</i>';
+    }
+    return '<div class="q-cases" aria-hidden="true">' + html + '</div>';
+  }
+  function quizButtons() {
+    return '<button class="btn btn-doux" type="button" id="qPeek">' + ICON.eye + 'Revoir le mot</button>';
+  }
+  function bindPeek() { $('#qPeek').addEventListener('click', function () { G.views++; phaseSee(); }); }
+  function quizCount() {
+    var sep = /[^a-zà-öø-ÿœæç]/i.test(G.item.e.w.w);
+    setCard('', quizHead() + '<p class="q-ordinal">Combien de lettres<br>dans le mot ?</p>' + (sep ? '<p class="hint">Les espaces, apostrophes et tirets ne comptent pas.</p>' : '') +
+      '<p class="q-nombre" id="qNum" aria-live="polite">?</p>');
+    var keys = '1234567890'.split('').map(function (k) { return '<button class="touche" type="button" data-n="' + k + '">' + k + '</button>'; }).join('');
+    $('#bottom').innerHTML = '<div class="pave" id="pave">' + keys + '</div><div class="actions">' +
+      '<button class="btn btn-doux" type="button" id="qDel" aria-label="Effacer">' + ICON.del + '</button>' +
+      '<button class="btn btn-action" type="button" id="qOk">' + ICON.check + 'Vérifier</button></div>' + quizButtons();
+    $('#pave').addEventListener('mousedown', function (e) { e.preventDefault(); });
+    $('#pave').addEventListener('click', function (e) { var b = e.target.closest('[data-n]'); if (b) quizDigit(b.getAttribute('data-n')); });
+    $('#qDel').addEventListener('click', function () { quizDigit('del'); });
+    $('#qOk').addEventListener('click', quizCheckCount);
+    bindPeek();
+    speak('Combien de lettres dans le mot ?');
+  }
+  function quizDigit(k) {
+    if (G.phase !== 'quiz' || G.q.cur !== 'n') return;
+    if (k === 'del') G.q.typed = G.q.typed.slice(0, -1);
+    else if (G.q.typed.length < 2) G.q.typed = (G.q.typed + k).replace(/^0+/, '');
+    sound('key');
+    $('#qNum').textContent = G.q.typed || '?';
+  }
+  function quizCheckCount() {
+    if (G.phase !== 'quiz' || !G.q.typed) return;
+    var n = G.q.idx.length;
+    if (+G.q.typed === n) quizRight(n + ' lettres, c\'est ça !');
+    else quizWrong(+G.q.typed < n ? 'Il y en a plus. Compte-les en regardant le mot.' : 'Il y en a moins. Compte-les en regardant le mot.');
+  }
+  function quizLetter() {
+    var n = G.q.cur;
+    setCard('', quizHead() + '<p class="q-ordinal">Quelle est la<br>' + ordinal(n) + ' lettre ?</p>' + casesHTML());
+    $('#bottom').innerHTML = keyboardHTML() + quizButtons();
+    $('#kb').addEventListener('mousedown', function (e) { e.preventDefault(); });
+    $('#kb').addEventListener('click', function (e) { var k = e.target.closest('[data-k]'); if (k) quizCheckLetter(k.getAttribute('data-k')); });
+    bindPeek();
+    speak('Quelle est la ' + ordinal(n) + ' lettre ?');
+  }
+  function quizCheckLetter(k) {
+    if (G.phase !== 'quiz' || G.q.cur === 'n' || !LETTER.test(k)) return;
+    var want = G.item.e.w.w[G.q.idx[G.q.cur - 1]].toLowerCase();
+    if (k === want) { quizRight('Oui, c\'est « ' + want + ' » !'); return; }
+    var bare = function (c) { return c.normalize('NFD').replace(/[\u0300-\u036f]/g, ''); };
+    quizWrong(bare(k) === bare(want) && want !== k ? 'Presque ! Regarde bien l\'accent.' : 'Ce n\'est pas ça. Regarde bien le mot.');
+  }
+  function quizRight(msg) {
+    G.phase = 'quiz-ok';
+    var q = G.q;
+    q.todo.shift();
+    q.asked++;
+    if (q.cur !== 'n') q.done[q.cur] = true;
+    sound('ok');
+    var card = $('#card');
+    card.className = 'card reussie';
+    $('#bottom').innerHTML = '<p class="feedback ok">' + esc(msg) + '</p>';
+    if (q.cur !== 'n') { var c = card.querySelector('.q-cases'); if (c) c.outerHTML = casesHTML(); }
+    if (prefs.anim) replay(card, 'anim-bravo');
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(quizNext, 900);
+  }
+  // Erreur : on revoit le mot (lettres numérotées, ou la lettre demandée qui clignote), la question revient plus tard.
+  function quizWrong(msg) {
+    G.phase = 'quiz-fix';
+    var q = G.q, w = G.item.e.w;
+    q.todo.push(q.todo.shift());
+    if (q.cur === 'n') { q.todo.splice(q.todo.indexOf('n'), 1); q.todo.unshift('n'); }
+    var opts = q.cur === 'n' ? { num: true } : { hl: [q.idx[q.cur - 1]] };
+    setCard('a-retenter', sayBtn() + '<p class="etiquette">Regarde encore</p><p class="word' + (opts.num ? ' numerote' : '') + '" style="font-size:' + fitSize(w.w) + '">' + wordHTML(w, opts) + '</p>');
+    $('#bottom').innerHTML = '<p class="feedback fix">' + esc(msg) + '</p><button class="btn btn-action" type="button" id="seenBtn">Je l\'ai dans la tête</button>';
+    $('#seenBtn').addEventListener('click', quizNext);
+    sound('ko');
+    if (prefs.anim) replay($('#card'), 'anim-non');
+    if (prefs.sound && navigator.vibrate) navigator.vibrate(60);
+  }
+  function quizEnd() {
+    G.item.quizDone = true;
+    G.q = null;
+    G.phase = 'quiz-end';
+    setCard('reussie', '<p class="etiquette">Toutes les lettres</p><p class="q-ordinal">Bravo, tu connais<br>toutes les lettres !</p>');
+    $('#bottom').innerHTML = '<p class="feedback ok">Maintenant, écris le mot en entier.</p><button class="btn btn-action" type="button" id="seenBtn">Je l\'écris</button>';
+    $('#seenBtn').addEventListener('click', phaseHide);
+    stars();
+    showCreature('Toutes les lettres !');
+  }
+
   // 2. Cacher : le mot disparaît quelques secondes.
   function phaseHide() {
     G.phase = 'hide';
@@ -1995,7 +2149,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     // Le mot raté revient un peu plus tard dans la séance (une seule fois).
     if (last && G.attempt === 0 && !G.item.again && !G.requeued[G.item.e.k]) {
       G.requeued[G.item.e.k] = true;
-      G.queue.splice(Math.min(2, G.queue.length), 0, { e: G.item.e, steps: [{ target: G.item.e.w.w, locked: 0 }], again: true });
+      G.queue.splice(Math.min(2, G.queue.length), 0, { e: G.item.e, steps: [{ target: G.item.e.w.w, locked: 0 }], again: true, quiz: prefs.quiz !== 'non' });
     }
     G.attempt++;
     G.copy = G.attempt >= 2;
@@ -2012,12 +2166,18 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     if (prefs.anim) replay($('#card'), 'anim-non');
     if (prefs.sound && navigator.vibrate) navigator.vibrate(60);
   }
-  $('#quit').addEventListener('click', function () { clearTimeout(hideTimer); hideCreature(); if ('speechSynthesis' in window) speechSynthesis.cancel(); renderHome(); });
+  $('#quit').addEventListener('click', function () { G.phase = ''; clearTimeout(hideTimer); hideCreature(); if ('speechSynthesis' in window) speechSynthesis.cancel(); renderHome(); });
 
   // Clavier physique (ordinateur, tablette avec clavier).
   document.addEventListener('keydown', function (e) {
     if ($('#play').hidden || e.ctrlKey || e.metaKey || e.altKey) return;
-    if (G.phase === 'write') {
+    if (G.phase === 'quiz' && G.q) {
+      if (G.q.cur === 'n') {
+        if (/^\d$/.test(e.key)) { e.preventDefault(); quizDigit(e.key); }
+        else if (e.key === 'Backspace') { e.preventDefault(); quizDigit('del'); }
+        else if (e.key === 'Enter') { e.preventDefault(); quizCheckCount(); }
+      } else if (e.key.length === 1 && LETTER.test(e.key)) { e.preventDefault(); quizCheckLetter(e.key.toLowerCase()); }
+    } else if (G.phase === 'write') {
       if (e.key === 'Backspace') { e.preventDefault(); typeKey('del'); }
       else if (e.key === 'Enter') { e.preventDefault(); check(); }
       else if (e.key.length === 1 && (LETTER.test(e.key) || e.key === "'" || e.key === '’' || e.key === '-' || e.key === ' ')) { e.preventDefault(); typeKey(e.key === '’' ? "'" : e.key.toLowerCase()); }
@@ -2097,11 +2257,15 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     backFromSettings = views.filter(function (v) { return !$('#' + v).hidden; })[0] || 'home';
     OPTS.forEach(function (p) { $('#' + p[0]).checked = !!prefs[p[1]]; });
     document.querySelectorAll('input[name="size"]').forEach(function (r) { r.checked = +r.value === prefs.size; });
+    document.querySelectorAll('input[name="quiz"]').forEach(function (r) { r.checked = r.value === prefs.quiz; });
     show('reglages');
   });
   $('#setBack').addEventListener('click', function () { if (backFromSettings === 'parent') renderParent(); else if (backFromSettings === 'dictee') renderDictee(curDictee); else renderHome(); });
   document.querySelectorAll('input[name="size"]').forEach(function (r) {
     r.addEventListener('change', function () { prefs.size = +r.value; savePrefs(); });
+  });
+  document.querySelectorAll('input[name="quiz"]').forEach(function (r) {
+    r.addEventListener('change', function () { prefs.quiz = r.value; savePrefs(); });
   });
   $('#presetBtn').addEventListener('click', function () {
     lists.push({ id: PRESET.id, name: PRESET.name, test: '', created: Date.now(), words: PRESET.words.map(function (w) { return { w: w, syl: '', marks: {}, tip: PRESET.tips[w] || '' }; }) });
