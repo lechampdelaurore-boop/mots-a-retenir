@@ -403,6 +403,7 @@ body.playing .entete { display: none; }
 .card.reussie { background: var(--tint-good); }
 .card.a-retenter { background: var(--tint-retry); }
 .card .say-btn { position: absolute; top: 10px; right: 10px; }
+.card > .etiquette { padding-inline: 50px; } /* jamais sous le bouton « écouter » */
 .card .say-btn svg { width: 24px; height: 24px; }
 .prompt { font-family: var(--display); font-weight: 600; font-size: clamp(1.25rem, 5.5vw, 1.6rem); margin: 0; line-height: 1.2; }
 .cloud { width: 150px; height: 84px; position: relative; }
@@ -419,7 +420,7 @@ body.playing .entete { display: none; }
 .diff .okc { color: var(--good-ink); }
 .diff .gap { border: 3px dashed var(--muted); color: transparent; margin: 0 1px; }
 .diff .wrong { border: 3px dashed var(--muted); color: var(--muted); margin: 0 1px; }
-.diff .extra { color: var(--muted); opacity: .45; }
+.diff .extra { color: var(--muted); opacity: .45; text-decoration: line-through 3px; }
 .feedback { min-height: 1.5em; text-align: center; font-weight: 800; font-size: 1.1rem; margin: 0; color: var(--ink); }
 .bottom { display: flex; flex-direction: column; gap: 10px; }
 .typed {
@@ -807,7 +808,8 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   function dayLabel(s, opts) { return parseDay(s).toLocaleDateString('fr-FR', opts || { weekday: 'long', day: 'numeric', month: 'long' }); }
 
   /* ---------- Mots ---------- */
-  function norm(s) { return String(s).normalize('NFC').replace(/[’‘`´]/g, "'").replace(/\s+/g, ' ').trim(); }
+  // Texte collé (PDF, site) : caractères invisibles retirés, apostrophes et tirets typographiques rendus tapables.
+  function norm(s) { return String(s).normalize('NFC').replace(/[\u00ad\u200b-\u200d\u2060\ufeff]/g, '').replace(/[’‘`´ʼ′＇]/g, "'").replace(/[\u2010-\u2013\u2212]/g, '-').replace(/\s+/g, ' ').trim(); }
   function keyOf(s) { return norm(s).toLowerCase(); }
   var LETTER = /[a-zà-öø-ÿœæç]/i;
   var VOWELS = 'aeiouyàâäéèêëîïôöùûüÿœæ';
@@ -917,11 +919,14 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
       return '<span class="extra">' + (o.c === ' ' ? '&nbsp;' : esc(o.c)) + '</span>';
     }).join('');
   }
+  // Lettres du mot à faire clignoter : lettres fausses ou oubliées. Une lettre en trop se voit barrée dans l'essai,
+  // sans faire clignoter sa voisine (sinon l'enfant croit que c'est la voisine qui est fausse).
   function wrongIdx(ops) {
     var out = [];
-    ops.forEach(function (o) { if (o.op === 's' || o.op === 'd') out.push(o.t); else if (o.op === '+') { out.push(Math.max(0, o.t - 1)); } });
+    ops.forEach(function (o) { if (o.op === 's' || o.op === 'd') out.push(o.t); });
     return out;
   }
+  function cost(ops) { return ops.filter(function (o) { return o.op !== '='; }).length; }
 
   /* ---------- Liste des mots outils (mots invariables courants) ---------- */
   var PRESET = {
@@ -2001,7 +2006,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   function quizLetter() {
     var n = G.q.cur;
     setCard('', quizHead() + '<p class="q-ordinal">Quelle est la<br>' + ordinal(n) + ' lettre ?</p>' + casesHTML());
-    $('#bottom').innerHTML = keyboardHTML() + quizButtons();
+    $('#bottom').innerHTML = keyboardHTML(G.item.e.w.w) + quizButtons();
     $('#kb').addEventListener('mousedown', function (e) { e.preventDefault(); });
     $('#kb').addEventListener('click', function (e) { var k = e.target.closest('[data-k]'); if (k) quizCheckLetter(k.getAttribute('data-k')); });
     bindPeek();
@@ -2072,8 +2077,12 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   var KB = [
     'azertyuiop', 'qsdfghjklm', "wxcvbn'-⌫", 'éèêëàâç', 'îïôûùœ␣'
   ];
-  function keyboardHTML() {
-    return '<div class="kb" id="kb">' + KB.map(function (row, r) {
+  // Un mot libre peut avoir un signe absent du clavier (ü, ñ, chiffre…) : on ajoute sa touche, sinon il serait impossible à écrire.
+  function keyboardHTML(word) {
+    var rows = KB.slice(), have = KB.join(''), more = '';
+    Array.from(keyOf(word || '')).forEach(function (c) { if (c !== ' ' && have.indexOf(c) < 0 && more.indexOf(c) < 0) more += c; });
+    if (more) rows[rows.length - 1] = rows[rows.length - 1].replace('␣', more + '␣');
+    return '<div class="kb" id="kb">' + rows.map(function (row, r) {
       return '<div class="r">' + Array.from(row).map(function (k) {
         if (k === '⌫') return '<button class="touche douce wide" type="button" data-k="del" aria-label="Effacer la dernière lettre">' + ICON.del + '</button>';
         if (k === '␣') return '<button class="touche douce space" type="button" data-k=" ">espace</button>';
@@ -2085,9 +2094,11 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     clearTimeout(hideTimer);
     G.phase = 'write';
     var st = cur();
-    if (G.copy) setCard('a-retenter', sayBtn() + '<p class="etiquette">Recopie-le en le regardant</p>' + bigWord(st.piece ? { later: st.target.length } : null));
-    else setCard('', sayBtn() + '<p class="prompt">' + (st.locked ? 'Écris la suite du mot' : 'Écris le mot de mémoire') + '</p>');
-    $('#bottom').innerHTML = '<div class="typed" id="typed" aria-live="polite" aria-label="Ce que tu as écrit"></div>' + keyboardHTML() +
+    // Pendant un morceau, on dit bien qu'on attend le morceau (le mot entier est accepté aussi).
+    var whole = st.piece && st.target.length < G.item.e.w.w.length ? '<p class="hint">Tu peux aussi écrire le mot entier.</p>' : '';
+    if (G.copy) setCard('a-retenter', sayBtn() + '<p class="etiquette">' + (st.piece ? 'Recopie le morceau ' + st.piece : 'Recopie-le en le regardant') + '</p>' + bigWord(st.piece ? { later: st.target.length } : null));
+    else setCard('', sayBtn() + '<p class="prompt">' + (st.piece ? 'Écris le morceau ' + st.piece : 'Écris le mot de mémoire') + '</p>' + whole);
+    $('#bottom').innerHTML = '<div class="typed" id="typed" aria-live="polite" aria-label="Ce que tu as écrit"></div>' + keyboardHTML(G.item.e.w.w) +
       '<div class="actions">' + (G.copy ? '' : '<button class="btn btn-doux" type="button" id="peekBtn">' + ICON.eye + 'Revoir</button>') +
       '<button class="btn btn-action" type="button" id="checkBtn">' + ICON.check + 'Vérifier</button></div>';
     renderTyped();
@@ -2107,17 +2118,23 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     if (G.phase !== 'write') return;
     var st = cur();
     if (k === 'del') { if (G.typed.length > st.locked) G.typed = G.typed.slice(0, -1); }
-    else if (G.typed.length < st.target.length + 8) G.typed += k;
+    else if (G.typed.length < G.item.e.w.w.length + 8) G.typed += k;
     sound('key');
     renderTyped();
   }
   // 4. Comparer
   function check() {
     if (G.phase !== 'write') return;
-    var st = cur(), e = G.item.e;
+    var st = cur(), e = G.item.e, steps = G.item.steps;
     if (G.typed.length <= st.locked) return;
-    var ok = norm(G.typed).toLowerCase() === norm(st.target).toLowerCase();
-    var last = G.step === G.item.steps.length - 1;
+    // Mot entier écrit pendant un morceau : c'est juste aussi (avant, il était refusé et la dernière lettre du morceau clignotait).
+    if (st.piece && G.step < steps.length - 1 && keyOf(G.typed) === keyOf(e.w.w)) {
+      if (G.copy) G.step = steps.length - 2; // recopié en le regardant : il reste à l'écrire de mémoire (étape « mot entier »)
+      else { G.step = steps.length - 1; G.attempt = 0; } // écrit de mémoire : c'est l'essai du mot entier
+      st = cur();
+    }
+    var ok = keyOf(G.typed) === keyOf(st.target);
+    var last = G.step === steps.length - 1;
     // Le premier essai du mot entier compte pour la répétition espacée.
     if (last && G.attempt === 0 && !G.item.again && !(e.k in G.results)) {
       G.results[e.k] = ok;
@@ -2130,7 +2147,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   function success(last) {
     G.phase = 'ok';
     var st = cur();
-    setCard('reussie', '<p class="etiquette">' + (G.copy ? 'Bien recopié' : 'Tout juste') + '</p><p class="word" style="font-size:' + fitSize(st.target) + '">' + wordHTML(G.item.e.w, st.piece ? { later: st.target.length } : null) + '</p>');
+    setCard('reussie', '<p class="etiquette">' + (G.copy ? 'Bien recopié' : 'Tout juste') + '</p><p class="word" style="font-size:' + fitSize(G.item.e.w.w) + '">' + wordHTML(G.item.e.w, st.piece ? { later: st.target.length } : null) + '</p>');
     $('#bottom').innerHTML = '<p class="feedback ok">' + (G.copy ? 'Bravo, tu l\'as écrit !' : pick(['Bravo !', 'Parfait !', 'Tout juste !', 'Super !'])) + '</p>' +
       '<button class="btn btn-action" type="button" id="nextBtn">' + (last ? (G.queue.length ? 'Mot suivant' : 'Voir mon bilan') : 'Continuer') + '</button>';
     $('#nextBtn').addEventListener('click', function () {
@@ -2146,7 +2163,13 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   // Erreur : la carte secoue la tête, le téléphone vibre, puis l'aide apparaît. Pas de croix rouge.
   function mistake(last) {
     G.phase = 'fix';
-    var st = cur(), ops = align(G.typed, st.target);
+    var st = cur(), ops = align(G.typed, st.target), aim = st.target;
+    // Pendant un morceau, si l'essai ressemble plus au mot entier qu'au morceau, on le compare au mot entier.
+    if (st.piece && st.target !== G.item.e.w.w) {
+      var full = align(G.typed, G.item.e.w.w);
+      if (cost(full) < cost(ops)) { ops = full; aim = G.item.e.w.w; }
+    }
+    var hl = wrongIdx(ops), extra = ops.filter(function (o) { return o.op === '+'; }).length;
     // Le mot raté revient un peu plus tard dans la séance (une seule fois).
     if (last && G.attempt === 0 && !G.item.again && !G.requeued[G.item.e.k]) {
       G.requeued[G.item.e.k] = true;
@@ -2155,8 +2178,9 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     G.attempt++;
     G.copy = G.attempt >= 2;
     setCard('a-retenter', sayBtn() + '<div class="attempt"><small>Ton essai</small><p class="diff" style="font-size:' + fitSize(G.typed + '  ', 2.6) + '">' + diffHTML(ops) + '</p></div>' +
-      '<div class="attempt"><small>Le mot</small><p class="word" style="font-size:' + fitSize(st.target, 3.2) + '">' + wordHTML(G.item.e.w, { later: st.piece ? st.target.length : null, hl: wrongIdx(ops) }) + '</p></div>' + tipHTML());
-    $('#bottom').innerHTML = '<p class="feedback fix">' + (G.copy ? 'Presque ! Cette fois, tu le recopies en le regardant.' : 'Presque ! Regarde bien les lettres qui clignotent.') + '</p>' +
+      '<div class="attempt"><small>Le mot</small><p class="word" style="font-size:' + fitSize(G.item.e.w.w, 3.2) + '">' + wordHTML(G.item.e.w, { later: st.piece && aim === st.target ? st.target.length : null, hl: hl }) + '</p></div>' + tipHTML());
+    var why = hl.length ? 'Regarde bien les lettres qui clignotent.' : extra > 1 ? 'Il y a des lettres en trop.' : 'Il y a une lettre en trop.';
+    $('#bottom').innerHTML = '<p class="feedback fix">' + (G.copy ? 'Presque ! Cette fois, tu le recopies en le regardant.' : 'Presque ! ' + why) + '</p>' +
       '<button class="btn btn-action" type="button" id="retryBtn">' + (G.copy ? 'Je le recopie' : 'Je réessaie') + '</button>';
     $('#retryBtn').addEventListener('click', function () {
       G.typed = st.target.slice(0, st.locked);
@@ -2170,6 +2194,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   $('#quit').addEventListener('click', function () { G.phase = ''; clearTimeout(hideTimer); hideCreature(); if ('speechSynthesis' in window) speechSynthesis.cancel(); renderHome(); });
 
   // Clavier physique (ordinateur, tablette avec clavier).
+  function onKb(k) { return Array.prototype.some.call(document.querySelectorAll('#kb [data-k]'), function (b) { return b.getAttribute('data-k') === k; }); }
   document.addEventListener('keydown', function (e) {
     if ($('#play').hidden || e.ctrlKey || e.metaKey || e.altKey) return;
     if (G.phase === 'quiz' && G.q) {
@@ -2181,7 +2206,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     } else if (G.phase === 'write') {
       if (e.key === 'Backspace') { e.preventDefault(); typeKey('del'); }
       else if (e.key === 'Enter') { e.preventDefault(); check(); }
-      else if (e.key.length === 1 && (LETTER.test(e.key) || e.key === "'" || e.key === '’' || e.key === '-' || e.key === ' ')) { e.preventDefault(); typeKey(e.key === '’' ? "'" : e.key.toLowerCase()); }
+      else if (e.key.length === 1 && (LETTER.test(e.key) || e.key === "'" || e.key === '’' || e.key === '-' || e.key === ' ' || onKb(e.key.toLowerCase()))) { e.preventDefault(); typeKey(e.key === '’' ? "'" : e.key.toLowerCase()); }
     } else if (e.key === 'Enter') {
       var b = $('#seenBtn') || $('#retryBtn') || $('#nextBtn');
       if (b && document.activeElement !== b) { e.preventDefault(); b.click(); }
