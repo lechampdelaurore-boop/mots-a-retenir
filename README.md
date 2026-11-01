@@ -25,7 +25,7 @@ Pour les mots difficiles, une étape en plus avant d'écrire le mot :
 4. Une réponse fausse : le mot réapparaît (lettres numérotées, ou la lettre demandée qui clignote), et la question revient un peu plus tard.
 5. Toutes les lettres trouvées : on écrit le mot en entier, comme d'habitude.
 
-Réglage dans ⚙ : **Jamais**, **Mots difficiles** (par défaut : un mot raté la dernière fois, ou raté pendant la séance) ou **Nouveaux et difficiles** (en plus, chaque mot vu pour la première fois).
+Réglage dans ⚙ : **Jamais**, **Pour les mots difficiles** (par défaut : un mot raté la dernière fois, ou raté pendant la séance) ou **Pour les nouveaux mots et les difficiles** (en plus, chaque mot vu pour la première fois).
 
 ## Les dictées de l'école
 

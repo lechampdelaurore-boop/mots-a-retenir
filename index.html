@@ -457,7 +457,8 @@ body.playing .entete { display: none; }
 }
 
 /* Questions sur les lettres (méthode de l'orthophoniste) */
-.seg-texte span { font-size: .95rem; line-height: 1.1; text-align: center; padding: 4px 6px; min-height: 56px; }
+.seg-texte { flex-direction: column; }
+.seg-texte span { padding: 4px 16px; font-size: 1.05rem; text-align: center; }
 .q-ordinal { font-family: var(--display); font-weight: 700; font-size: clamp(1.5rem, 7vw, 2rem); line-height: 1.1; margin: 0; }
 .q-cases { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; max-width: 100%; }
 .q-cases i { width: 26px; height: 32px; border: 2.5px solid var(--line); border-radius: 8px; background: var(--surface2); display: grid; place-items: center; font: 900 .95rem var(--display); font-style: normal; color: var(--on-good); }
@@ -707,10 +708,10 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
         <p class="hint">🧩 Questions sur les lettres (méthode de l'orthophoniste)</p>
         <div class="seg seg-texte" role="radiogroup" aria-label="Questions sur les lettres">
           <label><input type="radio" name="quiz" value="non"><span>Jamais</span></label>
-          <label><input type="radio" name="quiz" value="difficiles"><span>Mots difficiles</span></label>
-          <label><input type="radio" name="quiz" value="nouveaux"><span>Nouveaux et difficiles</span></label>
+          <label><input type="radio" name="quiz" value="difficiles"><span>Pour les mots difficiles</span></label>
+          <label><input type="radio" name="quiz" value="nouveaux"><span>Pour les nouveaux mots et les difficiles</span></label>
         </div>
-        <p class="hint">Le mot s'affiche, puis il disparaît et l'appli pose des questions : combien de lettres ? quelle est la 3e lettre ?… jusqu'à toutes les lettres. Ensuite, on écrit le mot. Mot difficile : raté la dernière fois.</p>
+        <p class="hint">Le mot s'affiche, puis il disparaît et l'appli pose des questions : «&nbsp;combien de lettres&nbsp;?&nbsp;», «&nbsp;quelle est la 3e lettre&nbsp;?&nbsp;»… jusqu'à toutes les lettres. Ensuite, on écrit le mot. Un mot difficile, c'est un mot raté la dernière fois.</p>
       </div>
       <button class="btn btn-action" type="button" id="setBack">Retour</button>
     </section>
