@@ -15,6 +15,15 @@ En cas d'erreur, la carte secoue la tête, les lettres à revoir clignotent, et 
 
 Les mots longs (3 syllabes ou plus) s'apprennent d'abord par morceaux, puis en entier.
 
+## Les dictées de l'école
+
+Les 11 dictées de la fiche « Listes des mots à apprendre » sont déjà dans l'appli, sur l'accueil.
+
+- Toucher une dictée, puis **choisir son groupe** : rouge, jaune, vert ou violet. Le groupe se choisit pour chaque dictée et se change quand on veut (les groupes bougent d'une semaine à l'autre). Rouge et jaune apprennent les mots du 1er groupe, vert ceux des 2 premiers, violet les 3.
+- Les mots sont rangés comme sur la fiche : noms, adjectifs et participes passés, verbes, mots invariables. Une pastille de couleur dit de quel groupe vient chaque mot. Le déterminant ou les autres formes (« un animal / des animaux ») s'affichent en astuce.
+- Une fois le groupe choisi, les mots de la dictée entrent dans la séance du jour. On peut ajouter une date de dictée, des **mots en plus**, et s'entraîner sur la dictée seule.
+- **Case « faite »** devant chaque dictée : on voit d'un coup d'œil où on en est. Une dictée faite reste ouverte pour réviser ; ses mots déjà commencés continuent de revenir, mais elle n'apporte plus de mots nouveaux dans la séance du jour.
+
 ## Les listes de mots
 
 Dans l'**Espace parent** (en bas de l'accueil) :

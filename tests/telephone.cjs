@@ -1,5 +1,6 @@
 // Vérifie sur le site EN LIGNE, au format de plusieurs téléphones, qu'une séance se déroule
 // sans ascenseur (voir le mot, l'écrire au clavier, se tromper, recopier) et sans erreur dans la console.
+// Vérifie aussi l'écran d'une dictée (choix du groupe, case « faite ») : rien ne dépasse sur le côté.
 // Usage : node tests/telephone.cjs [url]   (captures dans captures/)
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -24,7 +25,7 @@ const LIST = [{ id: 'test', name: 'Liste d\'essai', test: '', created: 1, words:
   }
 
   const browser = await chromium.launch();
-  const lines = ['| Écran | Voir | Écrire | Erreur | Recopier | Console |', '|---|---|---|---|---|---|'];
+  const lines = ['| Écran | Voir | Écrire | Erreur | Recopier | Dictée | Console |', '|---|---|---|---|---|---|---|'];
   let failed = false;
   for (const [w, h] of SIZES) {
     const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
@@ -63,9 +64,20 @@ const LIST = [{ id: 'test', name: 'Liste d\'essai', test: '', created: 1, words:
     await page.screenshot({ path: `captures/${w}x${h}-4-recopier.png` });
     await page.click('#checkBtn');
     await page.waitForSelector('#nextBtn');
+    // Écran d'une dictée : groupe violet (le plus de mots), puis case « faite » sur l'accueil.
+    await page.goto(URL + '?nocache=' + Date.now());
+    const side = () => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
+    await page.click('#homeDicts li:nth-child(1) .dict-open');
+    await page.click('#dGroupes [data-g="violet"]');
+    res.dictee = await side();
+    await page.screenshot({ path: `captures/${w}x${h}-5-dictee.png`, fullPage: true });
+    await page.click('#dBack');
+    await page.click('#homeDicts li:nth-child(1) .coche input');
+    res.dictee = Math.max(res.dictee, await side());
+    await page.screenshot({ path: `captures/${w}x${h}-6-accueil.png`, fullPage: true });
     const cell = d => (d > 0 ? `❌ dépasse de ${d} px` : '✅');
     if (Object.values(res).some(d => d > 0) || errors.length) failed = true;
-    lines.push(`| ${w}×${h} | ${cell(res.voir)} | ${cell(res.ecrire)} | ${cell(res.erreur)} | ${cell(res.recopier)} | ${errors.length ? '❌ ' + errors.join(' / ') : '✅'} |`);
+    lines.push(`| ${w}×${h} | ${cell(res.voir)} | ${cell(res.ecrire)} | ${cell(res.erreur)} | ${cell(res.recopier)} | ${cell(res.dictee)} | ${errors.length ? '❌ ' + errors.join(' / ') : '✅'} |`);
     await page.close();
   }
   await browser.close();
