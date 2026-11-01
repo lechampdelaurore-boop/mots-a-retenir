@@ -2,7 +2,8 @@
 // sans ascenseur (voir le mot, l'écrire au clavier, se tromper, recopier) et sans erreur dans la console.
 // Vérifie aussi l'écran d'une dictée (choix du groupe, case « faite ») : rien ne dépasse sur le côté,
 // et les questions sur les lettres (méthode de l'orthophoniste) : pas d'ascenseur.
-// Et un mot long appris par morceaux (« construction ») : le mot entier écrit dès le morceau 1 est accepté.
+// Et un mot long : par défaut écrit tout de suite en entier ; avec le réglage « Mots longs par morceaux »,
+// le mot entier écrit dès le morceau 1 est accepté (bug « construction » corrigé).
 // Usage : node tests/telephone.cjs [url]   (captures dans captures/)
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -88,16 +89,18 @@ const LIST = [{ id: 'test', name: 'Liste d\'essai', test: '', created: 1, words:
     await page.click('#pave [data-n="1"]');
     res.questions = await over();
     await page.screenshot({ path: `captures/${w}x${h}-7-questions.png` });
-    // Mot long, nouveau : appris par morceaux. Le mot entier tapé au morceau 1 doit être accepté (bug « construction » corrigé).
+    // Mot long, nouveau, réglage « par morceaux » activé. Le mot entier tapé au morceau 1 doit être accepté.
     const p2 = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
     p2.on('pageerror', e => errors.push(e.message));
     p2.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
     await p2.addInitScript(() => {
       localStorage.setItem('marc.mots.listes', JSON.stringify([{ id: 'long', name: 'Mot long', test: '', created: 1, words: [{ w: 'construction', syl: '', marks: {}, tip: '' }] }]));
-      localStorage.setItem('marc.mots.reglages', JSON.stringify({ sound: false, anim: false, voice: false, syl: true, size: 6, quiz: 'non' }));
+      localStorage.setItem('marc.mots.reglages', JSON.stringify({ sound: false, anim: false, voice: false, syl: true, size: 6, quiz: 'non', morceaux: true }));
     });
     await p2.goto(URL + '?nocache=' + Date.now());
     await p2.click('#startBtn');
+    await p2.waitForSelector('#seenBtn');
+    if (!/Morceau 1/.test(await p2.textContent('#card .etiquette'))) errors.push('réglage par morceaux sans effet');
     await p2.click('#seenBtn');
     await p2.waitForSelector('#kb', { timeout: 8000 });
     for (const ch of 'construction') await p2.click(`#kb [data-k="${ch}"]`);

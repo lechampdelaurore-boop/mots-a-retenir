@@ -698,7 +698,9 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
           <label class="interrupteur"><span>✨ Animations</span><input type="checkbox" id="optAnim"></label>
           <label class="interrupteur"><span>🗣️ Lire les mots à voix haute</span><input type="checkbox" id="optVoice"></label>
           <label class="interrupteur"><span>🎨 Syllabes en couleur</span><input type="checkbox" id="optSyl"></label>
+          <label class="interrupteur"><span>✂️ Mots longs par morceaux</span><input type="checkbox" id="optMorceaux"></label>
         </div>
+        <p class="hint">Mots longs par morceaux : un mot nouveau de 3 syllabes ou plus s'écrit d'abord en 2 ou 3 morceaux, puis en entier. Désactivé : il s'écrit tout de suite en entier.</p>
         <p class="hint">Nombre de mots par séance</p>
         <div class="seg" role="radiogroup" aria-label="Nombre de mots par séance">
           <label><input type="radio" name="size" value="5"><span>5</span></label>
@@ -774,7 +776,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   var lists = store.get(KEYS.lists, []);
   var prog = store.get(KEYS.prog, {});
   var log = store.get(KEYS.log, {});
-  var prefs = Object.assign({ sound: true, anim: true, voice: true, syl: true, size: 6, quiz: 'difficiles' }, store.get(KEYS.prefs, {}));
+  var prefs = Object.assign({ sound: true, anim: true, voice: true, syl: true, size: 6, quiz: 'difficiles', morceaux: false }, store.get(KEYS.prefs, {}));
   if (!Array.isArray(lists)) lists = [];
   // Dictées cochées « faite » : { faites: { numéro: date } }.
   var dict = store.get(KEYS.dict, {});
@@ -1856,12 +1858,13 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
 
   /* ---------- Séance ---------- */
   // Chaque mot passe par des étapes : voir, cacher, écrire, comparer.
-  // Un mot long (3 syllabes ou plus) encore nouveau s'apprend d'abord par morceaux, puis en entier.
+  // Réglage « Mots longs par morceaux » (désactivé par défaut) : un mot long (3 syllabes ou plus) encore nouveau
+  // s'apprend d'abord par morceaux, puis en entier.
   var G = null, hideTimer = null;
   function buildSteps(e) {
     var w = e.w, p = P(e.k), segs = segments(w);
     var syls = segs.filter(function (s) { return s.k === 's'; });
-    if (syls.length >= 3 && (!p || p.box <= 1)) {
+    if (prefs.morceaux && syls.length >= 3 && (!p || p.box <= 1)) {
       var parts = syls.length >= 5 ? 3 : 2, per = Math.ceil(syls.length / parts), ends = [];
       for (var i = 1; i < parts; i++) { var sy = syls[Math.min(i * per, syls.length) - 1]; ends.push(sy.i + sy.t.length); }
       // Les séparateurs (apostrophe, espace) vont avec le morceau d'avant.
@@ -2274,7 +2277,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   $('#parentBtn').addEventListener('click', renderParent);
   $('#parentBack').addEventListener('click', renderHome);
   $('#newListBtn').addEventListener('click', function () { openEditor(null); });
-  var OPTS = [['optSound', 'sound'], ['optAnim', 'anim'], ['optVoice', 'voice'], ['optSyl', 'syl']];
+  var OPTS = [['optSound', 'sound'], ['optAnim', 'anim'], ['optVoice', 'voice'], ['optSyl', 'syl'], ['optMorceaux', 'morceaux']];
   OPTS.forEach(function (p) {
     $('#' + p[0]).addEventListener('change', function (e) { prefs[p[1]] = e.target.checked; savePrefs(); });
   });
