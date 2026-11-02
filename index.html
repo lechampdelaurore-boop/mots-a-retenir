@@ -383,7 +383,7 @@ h2 { font-size: 1.4rem; }
 /* Séance */
 body.playing .wrap { padding-top: max(12px, env(safe-area-inset-top)); padding-bottom: max(12px, env(safe-area-inset-bottom)); }
 body.playing .entete { display: none; }
-#play {
+#play, #blanche {
   --pads: calc(max(12px, env(safe-area-inset-top)) + max(12px, env(safe-area-inset-bottom)));
   height: calc(100vh - var(--pads));
   height: calc(100dvh - var(--pads));
@@ -442,7 +442,7 @@ body.playing .entete { display: none; }
 .actions { display: flex; gap: 10px; }
 .actions .btn { flex: 1; }
 @media (max-height: 760px) {
-  #play { gap: 10px; }
+  #play, #blanche { gap: 10px; }
   .kb .touche { min-height: 43px; font-size: 1.25rem; }
   .typed { min-height: 54px; font-size: 1.8rem; }
   .bottom { gap: 8px; }
@@ -456,6 +456,37 @@ body.playing .entete { display: none; }
   .card { padding-block: 10px; gap: 8px; }
   .playbar .rond { width: 42px; height: 42px; }
 }
+
+/* Dictée blanche : les mots sont dictés à voix haute, sans être montrés */
+.modes { display: flex; flex-direction: column; gap: 10px; }
+.mode { display: flex; align-items: center; gap: 14px; width: 100%; padding: 12px 14px; text-align: left; font: inherit; color: inherit; cursor: pointer;
+  background: var(--surface2); border: var(--bord) solid var(--line); border-radius: 20px; box-shadow: 0 4px 0 var(--line); }
+.mode:active:not(:disabled) { transform: translateY(3px); box-shadow: 0 1px 0 var(--line); }
+.mode:disabled { opacity: .5; cursor: default; }
+.mode .ico { flex: none; width: 54px; height: 54px; display: grid; place-items: center; font-size: 1.8rem; border: var(--bord) solid var(--line); border-radius: 16px; background: var(--p-ciel); }
+.mode.oreille .ico { background: var(--p-menthe); }
+.mode .t { display: block; font-family: var(--display); font-weight: 700; font-size: 1.2rem; line-height: 1.15; }
+.mode .hint { display: block; margin-top: 2px; }
+.hp { width: 108px; height: 108px; border-radius: 50%; display: grid; place-items: center; cursor: pointer; flex: none;
+  background: var(--action); color: var(--on-action); border: var(--bord) solid var(--line); box-shadow: 0 6px 0 var(--line); }
+.hp:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--line); }
+.hp svg { width: 56px; height: 56px; }
+.hp.parle { animation: hp 0.9s ease-in-out infinite; }
+@keyframes hp { 50% { transform: scale(1.06); } }
+.calme .hp.parle { animation: none; }
+.feedback.doux { color: var(--muted); font-size: 1rem; }
+.relire { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.relire button { width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 12px; font: inherit; color: inherit; text-align: left; cursor: pointer;
+  background: var(--surface2); border: var(--bord) solid var(--line); border-radius: 16px; }
+.relire .n { flex: none; width: 30px; height: 30px; display: grid; place-items: center; border: 2.5px solid var(--line); border-radius: 50%; font: 700 .9rem var(--display); background: var(--surface); }
+.relire b { flex: 1; min-width: 0; font: 900 1.25rem var(--lecture); overflow-wrap: anywhere; }
+.relire .ed { flex: none; color: var(--muted); font-weight: 800; font-size: .85rem; }
+.corr { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.corr li { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px 52px; border: var(--bord) solid var(--line); border-radius: 18px; background: var(--tint-retry); }
+.corr .diff, .corr .word { font-size: 1.6rem; white-space: normal; overflow-wrap: anywhere; text-align: center; }
+.corr .say-btn { position: absolute; top: 8px; right: 8px; width: 40px; height: 40px; }
+.corr .say-btn svg { width: 20px; height: 20px; }
+.corr .vide { color: var(--muted); font-weight: 800; }
 
 /* Questions sur les lettres (méthode de l'orthophoniste) */
 .seg-texte { flex-direction: column; }
@@ -658,8 +689,60 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
         <div id="dMots" class="dmots"></div>
         <button class="link" type="button" id="dPlus" hidden>Ajouter des mots en plus</button>
       </div>
-      <button class="btn btn-action" type="button" id="dGo" disabled>S'entraîner sur cette dictée</button>
+      <div class="panel">
+        <h2>Je m'entraîne</h2>
+        <div class="modes">
+          <button class="mode" type="button" id="dGo" disabled><span class="ico" aria-hidden="true">📖</span><span><span class="t">Apprendre les mots</span><span class="hint">Quelques mots à la fois : je regarde, je cache, j'écris.</span></span></button>
+          <button class="mode oreille" type="button" id="dBlanche" disabled><span class="ico" aria-hidden="true">🎧</span><span><span class="t" id="dBlancheNom"></span><span class="hint" id="dBlancheSub"></span></span></button>
+        </div>
+        <p class="hint" id="dBlancheLast" hidden></p>
+        <button class="link" type="button" id="dBlancheReset" hidden>Recommencer à zéro</button>
+      </div>
       <button class="btn" type="button" id="dBack">Retour</button>
+    </section>
+
+    <!-- Dictée blanche : écrire -->
+    <section id="blanche" hidden>
+      <div class="playbar">
+        <button class="rond" type="button" id="bQuit" aria-label="Arrêter (ta dictée est gardée)">✕</button>
+        <div class="barre" role="progressbar" aria-label="Mots de la dictée" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="bMeter"><i id="bBar"></i></div>
+        <span class="count" id="bCount"></span>
+      </div>
+      <div class="scene"><div class="card" id="bCard"></div></div>
+      <div class="bottom" id="bBottom"></div>
+    </section>
+
+    <!-- Dictée blanche : se relire -->
+    <section id="relire" class="stack" hidden>
+      <div class="panel">
+        <h2>Je me relis</h2>
+        <p class="hint">Relis bien chaque mot. Touche un mot pour le réécouter et le changer.</p>
+        <ol class="relire" id="rList"></ol>
+      </div>
+      <button class="btn btn-action" type="button" id="rGo">Corriger ma dictée</button>
+      <button class="btn" type="button" id="rQuit">Arrêter (ta dictée est gardée)</button>
+    </section>
+
+    <!-- Dictée blanche : correction -->
+    <section id="corrige" class="stack" hidden>
+      <div class="panel">
+        <div class="done-top">
+          <svg viewBox="0 0 100 100" id="cArt" aria-hidden="true"></svg>
+          <h2 id="cTitle"></h2>
+          <p class="hint" id="cSub"></p>
+        </div>
+      </div>
+      <div class="panel" id="cKoPanel">
+        <h2 id="cKoTitle">À revoir</h2>
+        <ul class="corr" id="cKo"></ul>
+      </div>
+      <div class="panel" id="cOkPanel">
+        <h2 id="cOkTitle">Bien écrits</h2>
+        <ul class="chips" id="cOk"></ul>
+      </div>
+      <button class="btn btn-action" type="button" id="cRedo"></button>
+      <button class="btn btn-doux" type="button" id="cLearn"></button>
+      <button class="btn" type="button" id="cBack">Retour à la dictée</button>
     </section>
 
     <!-- Espace parent -->
@@ -1670,10 +1753,10 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
   };
 
   /* ---------- Écrans ---------- */
-  var views = ['home', 'play', 'done', 'treasure', 'parent', 'edit', 'import', 'reglages', 'dictee'];
+  var views = ['home', 'play', 'done', 'treasure', 'parent', 'edit', 'import', 'reglages', 'dictee', 'blanche', 'relire', 'corrige'];
   function show(name) {
     views.forEach(function (v) { $('#' + v).hidden = v !== name; });
-    document.body.classList.toggle('playing', name === 'play');
+    document.body.classList.toggle('playing', name === 'play' || name === 'blanche');
     window.scrollTo(0, 0);
   }
 
@@ -1816,6 +1899,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     }
     $('#dPlus').hidden = !l;
     $('#dGo').disabled = !l || !l.words.length;
+    renderBlancheBtn(n, l);
     show('dictee');
   }
   $('#dGroupes').addEventListener('click', function (e) {
@@ -1839,6 +1923,238 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     if (l) { editBack = curDictee; openEditor(l.id); }
   });
   $('#dBack').addEventListener('click', renderHome);
+
+  /* ---------- Dictée blanche : tous les mots dictés à voix haute, sans les voir ---------- */
+  // L'enfant écoute chaque mot (bouton pour réécouter), l'écrit, se relit, puis voit la correction.
+  // La dictée en cours est gardée sur l'appareil (on peut l'arrêter et la reprendre).
+  var BLANCHE_NOM = 'Dictée blanche';
+  var BKEY = 'marc.mots.blanche';
+  var B = null, C = null;
+  var canSpeak = 'speechSynthesis' in window && 'SpeechSynthesisUtterance' in window;
+  function saveB() { if (B) store.set(BKEY, B); else store.del(BKEY); }
+  function savedB(n, l) {
+    var s = store.get(BKEY, null);
+    if (!s || s.n !== n || !l || s.g !== l.groupe || !Array.isArray(s.words) || !s.words.length) return null;
+    return s;
+  }
+  function uniqueWords(l) {
+    var seen = {};
+    return l.words.filter(function (w) { var k = keyOf(w.w); if (seen[k]) return false; seen[k] = 1; return true; });
+  }
+  // Ce que dit la voix : le mot, puis le mot avec son petit mot de la fiche (« an… un an »), pour ne pas confondre.
+  function blancheParts(n, w) {
+    var x = null, parts = [w];
+    dicteeWords(dictee(n), 'violet').forEach(function (y) { if (keyOf(y.w) === keyOf(w)) x = y; });
+    var t = x && x.tip ? x.tip.split(' / ')[0].trim() : '';
+    if (t && t.indexOf('(') < 0 && keyOf(t) !== keyOf(w) && keyOf(t).slice(-keyOf(w).length) === keyOf(w)) parts.push(t);
+    return parts;
+  }
+  // Juste : le mot seul, ou le mot avec son petit mot (« la construction »).
+  function blancheOk(n, w, typed) {
+    var k = keyOf(typed);
+    return blancheParts(n, w).some(function (p) { return keyOf(p) === k; });
+  }
+  function speakParts(parts) {
+    if (!canSpeak) return;
+    try {
+      speechSynthesis.cancel();
+      var hp = $('#bSay');
+      parts.forEach(function (text, i) {
+        var u = new SpeechSynthesisUtterance(text);
+        u.lang = 'fr-FR';
+        if (frVoice) u.voice = frVoice;
+        u.rate = i ? 0.85 : 0.75;
+        if (hp && i === 0) u.onstart = function () { hp.classList.add('parle'); };
+        if (hp && i === parts.length - 1) u.onend = u.onerror = function () { hp.classList.remove('parle'); };
+        speechSynthesis.speak(u);
+      });
+    } catch (e) {}
+  }
+  function renderBlancheBtn(n, l) {
+    var s = savedB(n, l), words = l ? uniqueWords(l).length : 0;
+    $('#dBlancheNom').textContent = BLANCHE_NOM;
+    $('#dBlanche').disabled = !l || !words || !canSpeak;
+    var sub;
+    if (!canSpeak) sub = 'Cet appareil ne sait pas lire les mots à voix haute.';
+    else if (!l) sub = 'Les mots dictés à voix haute, sans les voir.';
+    else if (s) sub = s.phase === 'relire' ? 'Reprendre : il te reste à te relire.' : 'Reprendre : mot ' + (s.i + 1) + ' sur ' + s.words.length + '.';
+    else sub = 'Les ' + words + ' mots dictés à voix haute, sans les voir. Correction à la fin.';
+    $('#dBlancheSub').textContent = sub;
+    $('#dBlancheReset').hidden = !s;
+    var h = ((dict.blanches || {})[n] || []).slice(-1)[0];
+    $('#dBlancheLast').hidden = !h;
+    if (h) $('#dBlancheLast').textContent = 'Dernière ' + BLANCHE_NOM.toLowerCase() + ' : ' + h.ok + ' sur ' + h.total + ', ' + dayLabel(h.d) + '.';
+  }
+  function startBlanche(n, words, redo) {
+    var l = dicteeList(n);
+    if (!l || !words.length) return;
+    words = shuffle(words.slice());
+    B = { n: n, g: l.groupe, words: words, typed: words.map(function () { return ''; }), i: 0, redo: !!redo, phase: 'write', edit: false };
+    saveB();
+    blancheWord();
+  }
+  function blancheWord() {
+    B.phase = 'write';
+    show('blanche');
+    var total = B.words.length, pct = Math.round(100 * B.i / total);
+    $('#bBar').style.width = pct + '%';
+    $('#bMeter').setAttribute('aria-valuenow', pct);
+    $('#bCount').textContent = (B.i + 1) + ' / ' + total;
+    var card = $('#bCard');
+    card.className = 'card';
+    card.innerHTML = '<p class="etiquette">Mot ' + (B.i + 1) + ' sur ' + total + '</p>' +
+      '<button class="hp" type="button" id="bSay" aria-label="Réécouter le mot">' + ICON.say + '</button>' +
+      '<p class="prompt">Écoute et écris le mot</p><p class="hint">Touche le haut-parleur pour réécouter.</p>';
+    var back = B.edit ? '' : (B.i > 0 ? '<button class="btn btn-doux" type="button" id="bPrev">‹ Mot d\'avant</button>' : '');
+    var next = B.edit ? 'C\'est bon' : (B.i < total - 1 ? 'Mot suivant ›' : 'J\'ai fini');
+    $('#bBottom').innerHTML = '<div class="typed" id="bTyped" aria-live="polite" aria-label="Ce que tu as écrit"></div>' + keyboardHTML(B.words.join('')) +
+      '<div class="actions">' + back + '<button class="btn btn-action" type="button" id="bNext">' + next + '</button></div>';
+    renderBTyped();
+    $('#bSay').addEventListener('click', function () { speakParts(blancheParts(B.n, B.words[B.i])); });
+    $('#kb').addEventListener('mousedown', function (e) { e.preventDefault(); });
+    $('#kb').addEventListener('click', function (e) { var k = e.target.closest('[data-k]'); if (k) blancheKey(k.getAttribute('data-k')); });
+    $('#bNext').addEventListener('click', blancheNext);
+    if ($('#bPrev')) $('#bPrev').addEventListener('click', function () { B.i--; saveB(); blancheWord(); });
+    speakParts(blancheParts(B.n, B.words[B.i]));
+  }
+  function renderBTyped() {
+    var el = $('#bTyped'), t = B.typed[B.i];
+    if (!el) return;
+    el.innerHTML = '<span>' + esc(t).replace(/ /g, '&nbsp;') + '</span><span class="caret"></span>';
+    el.style.fontSize = t.length > 9 ? fitSize(t + '  ', 2) : '';
+  }
+  function blancheKey(k) {
+    if (!B || B.phase !== 'write') return;
+    var t = B.typed[B.i];
+    if (k === 'del') t = t.slice(0, -1);
+    else if (t.length < 40) t += k;
+    B.typed[B.i] = t;
+    sound('key');
+    renderBTyped();
+  }
+  function blancheNext() {
+    if (!B || B.phase !== 'write') return;
+    if (!norm(B.typed[B.i])) {
+      var b = $('#bTyped');
+      if (prefs.anim) replay(b, 'anim-non');
+      if (!$('#bVide')) b.insertAdjacentHTML('afterend', '<p class="feedback doux" id="bVide">Écris le mot, même si tu n\'es pas sûr.</p>');
+      return;
+    }
+    B.typed[B.i] = norm(B.typed[B.i]);
+    sound('key');
+    if (B.edit || B.i >= B.words.length - 1) { B.edit = false; blancheRelire(); return; }
+    B.i++;
+    saveB();
+    blancheWord();
+  }
+  function blancheRelire() {
+    if (canSpeak) speechSynthesis.cancel();
+    B.phase = 'relire';
+    saveB();
+    $('#rList').innerHTML = B.typed.map(function (t, i) {
+      return '<li><button type="button" data-i="' + i + '"><span class="n">' + (i + 1) + '</span><b>' + esc(t) + '</b><span class="ed">changer</span></button></li>';
+    }).join('');
+    show('relire');
+  }
+  $('#rList').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-i]');
+    if (!b || !B) return;
+    B.i = +b.getAttribute('data-i');
+    B.edit = true;
+    blancheWord();
+  });
+  function blancheQuit() {
+    if (canSpeak) speechSynthesis.cancel();
+    if (B) { B.edit = false; saveB(); renderDictee(B.n); } else renderHome();
+  }
+  $('#bQuit').addEventListener('click', blancheQuit);
+  $('#rQuit').addEventListener('click', blancheQuit);
+  $('#rGo').addEventListener('click', blancheCorrige);
+  function blancheCorrige() {
+    var n = B.n, l = dicteeList(n), ko = [], ok = [], t = today();
+    B.words.forEach(function (w, i) { (blancheOk(n, w, B.typed[i]) ? ok : ko).push({ w: w, typed: B.typed[i] }); });
+    var total = B.words.length;
+    if (!B.redo) {
+      dict.blanches = dict.blanches || {};
+      var h = dict.blanches[n] = dict.blanches[n] || [];
+      h.push({ d: t, ok: ok.length, total: total });
+      if (h.length > 10) h.splice(0, h.length - 10);
+      saveDict();
+      blancheLeitner(ok, ko);
+    }
+    C = { n: n, ko: ko.map(function (x) { return x.w; }), redo: B.redo };
+    B = null;
+    saveB();
+    var c = nextCreature();
+    $('#cArt').innerHTML = creatureSVG(c);
+    var all = ok.length === total, r = ok.length / total;
+    $('#cTitle').textContent = all ? 'Zéro faute !' : ok.length + ' sur ' + total;
+    $('#cSub').textContent = all ? c[0] + ' est épaté. Bravo !' :
+      (r >= 0.9 ? 'Super dictée ! ' : r >= 0.7 ? 'Bien joué ! ' : 'Tu progresses ! ') + c[0] + ' t\'a préparé la correction des mots à revoir.';
+    $('#cKoPanel').hidden = !ko.length;
+    $('#cKoTitle').textContent = 'À revoir (' + ko.length + ')';
+    var wordOf = {};
+    if (l) l.words.forEach(function (w) { wordOf[keyOf(w.w)] = w; });
+    $('#cKo').innerHTML = ko.map(function (x) {
+      var ops = align(x.typed, x.w), wo = wordOf[keyOf(x.w)] || { w: x.w };
+      return '<li><button class="rond say-btn" type="button" data-say="' + esc(x.w) + '" aria-label="Écouter le mot">' + ICON.say + '</button>' +
+        '<div class="attempt"><small>Ton essai</small><p class="diff">' + diffHTML(ops) + '</p></div>' +
+        '<div class="attempt"><small>Le mot</small><p class="word">' + wordHTML(wo, { hl: wrongIdx(ops) }) + '</p></div></li>';
+    }).join('');
+    $('#cOkPanel').hidden = !ok.length;
+    $('#cOkTitle').textContent = 'Bien écrits (' + ok.length + ')';
+    $('#cOk').innerHTML = ok.map(function (x) { return '<li class="good">' + esc(x.typed) + '</li>'; }).join('');
+    var nk = ko.length, mots = nk > 1 ? 'ces ' + nk + ' mots' : 'ce mot';
+    $('#cRedo').hidden = $('#cLearn').hidden = !nk;
+    $('#cRedo').textContent = 'Réécrire ' + mots + ' en dictée';
+    $('#cLearn').textContent = 'Apprendre ' + mots;
+    show('corrige');
+    sound('win');
+    if (all) confetti();
+  }
+  $('#cKo').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-say]');
+    if (b) speakParts([b.getAttribute('data-say')]);
+  });
+  $('#cRedo').addEventListener('click', function () { if (C) startBlanche(C.n, C.ko, true); });
+  $('#cLearn').addEventListener('click', function () {
+    var l = C && dicteeList(C.n);
+    if (!l) return;
+    var want = {};
+    C.ko.forEach(function (w) { want[keyOf(w)] = 1; });
+    var entries = uniqueWords(l).filter(function (w) { return want[keyOf(w.w)]; })
+      .map(function (w, i) { return { w: w, k: keyOf(w.w), list: l.id, test: l.test || '', order: i }; });
+    startSession(entries, 'list');
+  });
+  $('#cBack').addEventListener('click', function () { if (C) renderDictee(C.n); else renderHome(); });
+  // Répétition espacée : la dictée blanche compte comme un premier essai de la journée.
+  function blancheLeitner(ok, ko) {
+    if (!BLANCHE_COMPTE) return;
+    ok.forEach(function (x) { record(keyOf(x.w), true, 0); });
+    ko.forEach(function (x) { record(keyOf(x.w), false, 0); });
+  }
+  var BLANCHE_COMPTE = true;
+  $('#dBlanche').addEventListener('click', function () {
+    var l = dicteeList(curDictee);
+    if (!l) return;
+    var s = savedB(curDictee, l);
+    if (s) {
+      B = s;
+      B.edit = false;
+      if (B.phase === 'relire') blancheRelire(); else blancheWord();
+    } else startBlanche(curDictee, uniqueWords(l).map(function (w) { return w.w; }), false);
+  });
+  $('#dBlancheReset').addEventListener('click', function () {
+    store.del(BKEY);
+    renderDictee(curDictee);
+  });
+  // Clavier physique pendant la dictée blanche.
+  document.addEventListener('keydown', function (e) {
+    if ($('#blanche').hidden || !B || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === 'Backspace') { e.preventDefault(); blancheKey('del'); }
+    else if (e.key === 'Enter') { e.preventDefault(); blancheNext(); }
+    else if (e.key.length === 1 && (LETTER.test(e.key) || e.key === "'" || e.key === '’' || e.key === '-' || e.key === ' ' || onKb(e.key.toLowerCase()))) { e.preventDefault(); blancheKey(e.key === '’' ? "'" : e.key.toLowerCase()); }
+  });
 
   /* ---------- Trésor ---------- */
   function renderTreasure() {
