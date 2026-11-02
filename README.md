@@ -36,6 +36,17 @@ Les 11 dictées de la fiche « Listes des mots à apprendre » sont déjà dans 
 - Une fois le groupe choisi, les mots de la dictée entrent dans la séance du jour. On peut ajouter une date de dictée, des **mots en plus**, et s'entraîner sur la dictée seule.
 - **Case « faite »** devant chaque dictée : on voit d'un coup d'œil où on en est. Une dictée faite reste ouverte pour réviser ; ses mots déjà commencés continuent de revenir, mais elle n'apporte plus de mots nouveaux dans la séance du jour.
 
+## Dictée blanche
+
+Sur la page de chaque dictée, deux façons de s'entraîner : **Apprendre les mots** (quelques mots à la fois : je regarde, je cache, j'écris) et **Dictée blanche**.
+
+- Tous les mots de la dictée (selon le groupe choisi) sont dictés à voix haute, dans le désordre, sans jamais être montrés. Un gros haut-parleur permet de réécouter. La voix dit le mot puis le redit avec son petit mot de la fiche (« an… un an ») ; les deux écritures sont acceptées.
+- On peut revenir au mot d'avant. À la fin, écran **« Je me relis »** : toucher un mot pour le réécouter et le changer.
+- **Correction** : le score, les mots ratés avec les erreurs en surbrillance, puis « Réécrire ces mots en dictée » ou « Apprendre ces mots ».
+- La dictée en cours est gardée (on peut l'arrêter et la reprendre). Le dernier score s'affiche sur la page de la dictée.
+- Elle compte dans la répétition espacée comme une séance : mot juste, il avance ; mot raté, il revient demain. Seul le premier essai de la journée compte.
+- Il faut un appareil qui sait lire à voix haute (synthèse vocale du navigateur).
+
 ## Les listes de mots
 
 Dans l'**Espace parent** (en bas de l'accueil) :

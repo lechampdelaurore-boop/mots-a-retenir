@@ -2127,13 +2127,12 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     startSession(entries, 'list');
   });
   $('#cBack').addEventListener('click', function () { if (C) renderDictee(C.n); else renderHome(); });
-  // Répétition espacée : la dictée blanche compte comme un premier essai de la journée.
+  // Répétition espacée (choix de francois) : la dictée blanche compte comme une séance.
+  // Mot juste : il avance d'une boîte. Mot raté : il revient demain et devient « difficile ». Seul le 1er essai du jour compte.
   function blancheLeitner(ok, ko) {
-    if (!BLANCHE_COMPTE) return;
     ok.forEach(function (x) { record(keyOf(x.w), true, 0); });
     ko.forEach(function (x) { record(keyOf(x.w), false, 0); });
   }
-  var BLANCHE_COMPTE = true;
   $('#dBlanche').addEventListener('click', function () {
     var l = dicteeList(curDictee);
     if (!l) return;
