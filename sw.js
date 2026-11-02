@@ -1,6 +1,6 @@
 // Garde l'appli disponible hors ligne.
 // Changer CACHE à chaque mise à jour des fichiers listés ci-dessous.
-var CACHE = 'mots-a-retenir-v5';
+var CACHE = 'mots-a-retenir-v6';
 var FILES = [
   './',
   './index.html',

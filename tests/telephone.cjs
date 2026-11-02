@@ -4,6 +4,7 @@
 // et les questions sur les lettres (méthode de l'orthophoniste) : pas d'ascenseur.
 // Et un mot long : par défaut écrit tout de suite en entier ; avec le réglage « Mots longs par morceaux »,
 // le mot entier écrit dès le morceau 1 est accepté (bug « construction » corrigé).
+// Et la dictée blanche : écrire sans ascenseur, puis correction sans dépassement sur le côté.
 // Usage : node tests/telephone.cjs [url]   (captures dans captures/)
 const { chromium } = require('playwright');
 const fs = require('fs');
@@ -28,7 +29,7 @@ const LIST = [{ id: 'test', name: 'Liste d\'essai', test: '', created: 1, words:
   }
 
   const browser = await chromium.launch();
-  const lines = ['| Écran | Voir | Écrire | Erreur | Recopier | Dictée | Questions | Morceaux | Console |', '|---|---|---|---|---|---|---|---|---|'];
+  const lines = ['| Écran | Voir | Écrire | Erreur | Recopier | Dictée | Questions | Morceaux | Dictée blanche | Console |', '|---|---|---|---|---|---|---|---|---|---|'];
   let failed = false;
   for (const [w, h] of SIZES) {
     const page = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
@@ -110,9 +111,35 @@ const LIST = [{ id: 'test', name: 'Liste d\'essai', test: '', created: 1, words:
     await p2.waitForSelector('#nextBtn, #retryBtn');
     if (!(await p2.$('#nextBtn'))) errors.push('construction refusé au morceau 1');
     await p2.close();
+    // Dictée blanche (dictée 1, groupe rouge) : écrire sans ascenseur, se relire, correction sans dépassement sur le côté.
+    const p3 = await browser.newPage({ viewport: { width: w, height: h }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+    p3.on('pageerror', e => errors.push(e.message));
+    p3.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+    await p3.addInitScript(() => { if (!sessionStorage.getItem('fait')) { sessionStorage.setItem('fait', 1); localStorage.setItem('marc.mots.reglages', JSON.stringify({ sound: false, anim: false, voice: false, syl: true, size: 6 })); } });
+    await p3.goto(URL + '?nocache=' + Date.now());
+    await p3.click('#homeDicts li:nth-child(1) .dict-open');
+    await p3.click('#dGroupes [data-g="rouge"]');
+    await p3.click('#dBlanche');
+    await p3.waitForSelector('#bSay');
+    const mots = await p3.evaluate(() => JSON.parse(localStorage.getItem('marc.mots.blanche')).words);
+    res.blanche = 0;
+    for (let i = 0; i < mots.length; i++) {
+      const t = i === 0 ? mots[i] + 'x' : mots[i]; // une faute exprès
+      for (const ch of t.toLowerCase()) await p3.click(`#kb [data-k="${ch}"]`);
+      res.blanche = Math.max(res.blanche, await p3.evaluate(() => document.documentElement.scrollHeight - window.innerHeight));
+      if (i === 0) await p3.screenshot({ path: `captures/${w}x${h}-9-dictee-blanche.png` });
+      await p3.click('#bNext');
+    }
+    await p3.waitForSelector('#rGo');
+    await p3.click('#rGo');
+    await p3.waitForSelector('#cBack');
+    res.blanche = Math.max(res.blanche, await p3.evaluate(() => document.documentElement.scrollWidth - window.innerWidth));
+    await p3.screenshot({ path: `captures/${w}x${h}-10-correction.png`, fullPage: true });
+    if ((await p3.textContent('#cTitle')) !== (mots.length - 1) + ' sur ' + mots.length) errors.push('score de la dictée blanche faux');
+    await p3.close();
     const cell = d => (d > 0 ? `❌ dépasse de ${d} px` : '✅');
     if (Object.values(res).some(d => d > 0) || errors.length) failed = true;
-    lines.push(`| ${w}×${h} | ${cell(res.voir)} | ${cell(res.ecrire)} | ${cell(res.erreur)} | ${cell(res.recopier)} | ${cell(res.dictee)} | ${cell(res.questions)} | ${cell(res.morceaux)} | ${errors.length ? '❌ ' + errors.join(' / ') : '✅'} |`);
+    lines.push(`| ${w}×${h} | ${cell(res.voir)} | ${cell(res.ecrire)} | ${cell(res.erreur)} | ${cell(res.recopier)} | ${cell(res.dictee)} | ${cell(res.questions)} | ${cell(res.morceaux)} | ${cell(res.blanche)} | ${errors.length ? '❌ ' + errors.join(' / ') : '✅'} |`);
     await page.close();
   }
   await browser.close();
