@@ -2282,7 +2282,8 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
     hideCreature();
     if (G.q.cur === 'n') quizCount(); else quizLetter();
   }
-  function quizHead() { return '<p class="etiquette">Question ' + Math.min(G.q.asked + 1, G.q.total) + ' sur ' + G.q.total + '</p>'; }
+  // Pas de « Question 5 sur 7 » : le total trahirait le nombre de lettres.
+  function quizHead() { return '<p class="etiquette">Petite question</p>'; }
   function casesHTML() {
     var w = G.item.e.w.w, html = '', pos = 0;
     for (var i = 0; i < w.length; i++) {
