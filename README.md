@@ -64,7 +64,7 @@ Dans l'**Espace parent** (en bas de l'accueil) :
 - Un mot réussi 4 jours différents entre dans le **trésor de mots**.
 - Bouton « S'entraîner » sur chaque liste pour réviser avant une dictée, en plus de la séance du jour.
 
-Les listes et les progrès restent dans le navigateur de l'appareil : aucun compte, et rien n'est envoyé sur internet.
+Les listes et les progrès restent dans le navigateur de l'appareil : aucun compte, et rien sur les progrès n'est envoyé sur internet. Seul un compteur de visites anonyme (GoatCounter) compte les ouvertures de l'appli : pas de cookie, pas de nom.
 
 ## Fichiers
 
