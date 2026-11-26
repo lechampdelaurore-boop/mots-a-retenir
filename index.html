@@ -516,6 +516,20 @@ body.playing .entete { display: none; }
 .chips li { border: var(--bord) solid var(--line); border-radius: 14px; padding: 4px 12px; font: 900 1.1rem var(--lecture); background: var(--surface2); }
 .chips li.good { background: var(--tint-good); }
 .chips li.gold { background: var(--sun); color: var(--on-sun); }
+/* Page d'une dictée : où en est chaque mot (pas encore / entraîné / au trésor) */
+.dmots .chips li.neuf, .leg3 li.neuf { background: transparent; border-style: dashed; border-color: var(--muted); color: var(--muted); }
+.dmots .chips li.vu, .leg3 li.vu { background: var(--p-menthe); }
+.dmots .chips li.vu::after, .leg3 li.vu::after { content: ' ✓'; font: 900 .9rem var(--body); }
+.dmots .chips li.gold::after, .leg3 li.gold::after { content: ' ★'; font-size: .9rem; }
+.suivi { display: flex; flex-direction: column; gap: 8px; }
+.suivi .big { font: 800 1.05rem var(--display); }
+.suivi .barre { display: flex; }
+.suivi .barre i { display: block; height: 100%; }
+.suivi .barre .g { background: var(--sun); }
+.suivi .barre .v { background: var(--good); }
+.leg3 { display: flex; flex-wrap: wrap; gap: 6px 10px; margin: 0; padding: 0; list-style: none; }
+.leg3 li { border: 2px solid var(--line); border-radius: 14px; padding: 2px 10px; font: 800 .85rem var(--body); background: var(--surface2); }
+.cache { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .chips li small { font: 800 .8rem var(--body); color: var(--muted); margin-left: 6px; }
 
 /* Trésor */
@@ -1842,7 +1856,7 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
       var sub;
       if (g) {
         var st = listStats(l), tl = testLabel(l);
-        sub = '<i class="gdot ' + g.id + '"></i>' + g.nom + ' · ' + st.n + ' mots · ' + st.gold + ' au trésor' + (tl && !faite ? ' · ' + tl : '');
+        sub = '<i class="gdot ' + g.id + '"></i>' + g.nom + ' · ' + st.started + ' sur ' + st.n + ' entraînés · ' + st.gold + ' au trésor' + (tl && !faite ? ' · ' + tl : '');
       } else sub = 'Choisis ton groupe';
       if (faite) sub += ' · faite ✓';
       li.className = faite ? 'faite' : '';
@@ -1884,8 +1898,9 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
         (byCat[x.cat] = byCat[x.cat] || []).push({ w: w, niv: x.niv });
       });
       var chip = function (o) {
-        var k = keyOf(o.w.w);
-        return '<li class="' + (inTreasure(k) ? 'gold' : '') + '">' + (o.niv ? '<i class="gdot ' + o.niv + '" aria-label="groupe ' + NIV_NOM[o.niv] + '"></i>' : '') + esc(o.w.w) + '</li>';
+        var k = keyOf(o.w.w), p = P(k);
+        var etat = inTreasure(k) ? ['gold', 'au trésor'] : p && p.last ? ['vu', 'entraîné'] : ['neuf', 'pas encore entraîné'];
+        return '<li class="' + etat[0] + '">' + (o.niv ? '<i class="gdot ' + o.niv + '" aria-label="groupe ' + NIV_NOM[o.niv] + '"></i>' : '') + esc(o.w.w) + '<span class="cache"> : ' + etat[1] + '</span></li>';
       };
       var html = '';
       var nl = Object.keys(levels);
@@ -1895,8 +1910,12 @@ label.field { display: flex; flex-direction: column; gap: 6px; font-weight: 800;
         html += '<div><h3>' + c[1] + '</h3><ul class="chips">' + byCat[c[0]].map(chip).join('') + '</ul></div>';
       });
       if (extra.length) html += '<div><h3>Mots en plus</h3><ul class="chips">' + extra.map(function (w) { return chip({ w: w }); }).join('') + '</ul></div>';
-      var n = Object.keys(seen).length;
+      var ks = Object.keys(seen), n = ks.length;
+      var ng = ks.filter(inTreasure).length, nv = ks.filter(function (k) { return P(k) && P(k).last; }).length;
       $('#dCount').textContent = n + ' mots à apprendre';
+      if (n) html = '<div class="suivi"><span class="big">Déjà entraînés : ' + nv + ' sur ' + n + '</span>' +
+        '<div class="barre" role="progressbar" aria-label="Mots déjà entraînés" aria-valuemin="0" aria-valuemax="' + n + '" aria-valuenow="' + nv + '"><i class="g" style="width:' + (100 * ng / n) + '%"></i><i class="v" style="width:' + (100 * (nv - ng) / n) + '%"></i></div>' +
+        '<ul class="leg3" aria-hidden="true"><li class="neuf">pas encore</li><li class="vu">entraîné</li><li class="gold">au trésor</li></ul></div>' + html;
       box.innerHTML = html;
       if (!nl.length && !extra.length) box.innerHTML = '<p class="hint">Aucun mot.</p>';
     }
